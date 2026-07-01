@@ -59,6 +59,15 @@ export async function searchUsers({ query = '', currentUserId = null }) {
         OR LOWER(users.username) LIKE $2
         OR LOWER(COALESCE(profiles.display_name, '')) LIKE $2
       )
+        AND (
+          $3::int IS NULL
+          OR NOT EXISTS (
+            SELECT 1
+            FROM blocked_users
+            WHERE (blocker_id = $3::int AND blocked_id = users.id)
+               OR (blocker_id = users.id AND blocked_id = $3::int)
+          )
+        )
       ORDER BY
         CASE WHEN $1::boolean = true AND LOWER(users.username) = LOWER($4) THEN 0 ELSE 1 END,
         CASE WHEN $1::boolean = true AND LOWER(users.username) LIKE $2 THEN 0 ELSE 1 END,

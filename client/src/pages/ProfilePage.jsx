@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { blockUser } from '../api/blockApi.js';
 import { getUserBulletins } from '../api/bulletinApi.js';
 import { getComments, postComment } from '../api/commentApi.js';
 import { getProfile } from '../api/profileApi.js';
@@ -35,7 +36,7 @@ function Box({ title, children, className = '' }) {
 }
 
 function ContactBox({ displayName }) {
-  const actions = ['Add Friend', 'Send Message', 'Add Favorite', 'Block User'];
+  const actions = ['Add Friend', 'Send Message', 'Add Favorite'];
 
   return (
     <Box title={`Contact ${displayName}`}>
@@ -270,6 +271,8 @@ export default function ProfilePage({ currentUser }) {
   const [bulletins, setBulletins] = useState([]);
   const [bulletinError, setBulletinError] = useState('');
   const [status, setStatus] = useState('loading');
+  const [pageMessage, setPageMessage] = useState('');
+  const [pageError, setPageError] = useState('');
 
   useEffect(() => {
     let ignore = false;
@@ -291,8 +294,12 @@ export default function ProfilePage({ currentUser }) {
             setComments(commentsData);
           }
         } catch (err) {
-          if (!ignore && err.message === 'This profile is private') {
-            setStatus('private');
+          if (!ignore) {
+            if (err.message === 'This profile is private') {
+              setStatus('private');
+            } else if (err.message === 'This interaction is blocked. The glitter wall is up.') {
+              setStatus('blocked');
+            }
           }
         }
 
@@ -311,7 +318,13 @@ export default function ProfilePage({ currentUser }) {
         }
       } catch (err) {
         if (!ignore) {
-          setStatus(err.message === 'This profile is private' ? 'private' : 'error');
+          if (err.message === 'This profile is private') {
+            setStatus('private');
+          } else if (err.message === 'This profile is unavailable' || err.message === 'You blocked this user') {
+            setStatus('blocked');
+          } else {
+            setStatus('error');
+          }
         }
       }
     }
@@ -322,6 +335,27 @@ export default function ProfilePage({ currentUser }) {
       ignore = true;
     };
   }, [username]);
+
+  async function handleBlockUser() {
+    if (!profile) return;
+
+    const confirmed = window.confirm(`Are you sure you want to block @${profile.username}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setPageMessage('');
+    setPageError('');
+
+    try {
+      await blockUser(profile.username);
+      setPageMessage('User blocked. The glitter curtain has been slammed shut.');
+      setStatus('blocked');
+    } catch (err) {
+      setPageError(err.message);
+    }
+  }
 
   if (status === 'loading') {
     return (
@@ -336,6 +370,16 @@ export default function ProfilePage({ currentUser }) {
       <main className="page-shell">
         <div className="retro-state retro-state--error">
           This profile is private. The glitter curtain is closed.
+        </div>
+      </main>
+    );
+  }
+
+  if (status === 'blocked') {
+    return (
+      <main className="page-shell">
+        <div className="retro-state retro-state--error">
+          {pageMessage || 'This interaction is blocked. The glitter wall is up.'}
         </div>
       </main>
     );
@@ -382,10 +426,17 @@ export default function ProfilePage({ currentUser }) {
         <Sidebar profile={profile} />
 
         <section className="profile-main" aria-label={`${profile.displayName} profile`}>
+          {pageMessage && <div className="editor-success">{pageMessage}</div>}
+          {pageError && <div className="auth-error">{pageError}</div>}
           <div className="profile-hero">
             <p className="profile-kicker">Public Profile</p>
             <h1>{profile.profileTitle}</h1>
             <p>{profile.headline}</p>
+            {currentUser && currentUser.username !== profile.username && (
+              <button type="button" className="profile-block-button" onClick={handleBlockUser}>
+                Block User
+              </button>
+            )}
           </div>
 
           <Box title="About Me" className="about-box">

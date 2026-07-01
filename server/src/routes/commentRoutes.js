@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isBlockedBetween } from '../db/blockQueries.js';
 import { createProfileComment, getCommentsForProfileUsername } from '../db/commentQueries.js';
 import {
   canCommentOnProfile,
@@ -19,6 +20,14 @@ router.get('/:username', sessionMiddleware, async (req, res) => {
     }
 
     const allowed = await canViewProfile(privacy, req.session?.user?.id || null);
+
+    if (req.session?.user?.id && req.session.user.id !== privacy.userId) {
+      const blockStatus = await isBlockedBetween(req.session.user.id, privacy.userId);
+
+      if (blockStatus.blocked) {
+        return res.status(403).json({ error: 'This interaction is blocked. The glitter wall is up.' });
+      }
+    }
 
     if (!allowed) {
       return res.status(403).json({ error: 'This profile is private' });
@@ -56,6 +65,14 @@ router.post('/:username', sessionMiddleware, async (req, res) => {
 
     if (!privacy) {
       return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    if (req.session.user.id !== privacy.userId) {
+      const blockStatus = await isBlockedBetween(req.session.user.id, privacy.userId);
+
+      if (blockStatus.blocked) {
+        return res.status(403).json({ error: 'You cannot comment on this profile' });
+      }
     }
 
     const canView = await canViewProfile(privacy, req.session.user.id);

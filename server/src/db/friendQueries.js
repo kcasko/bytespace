@@ -1,4 +1,5 @@
 import { pool, query } from './pool.js';
+import { isBlockedBetween } from './blockQueries.js';
 import { shareAcceptedFriend } from './settingsQueries.js';
 
 function mapFriendRow(row) {
@@ -49,6 +50,12 @@ export async function sendFriendRequest(requesterId, receiverUsername) {
 
   if (receiver.id === requesterId) {
     return { error: 'You cannot send a friend request to yourself.', statusCode: 400 };
+  }
+
+  const blockStatus = await isBlockedBetween(requesterId, receiver.id);
+
+  if (blockStatus.blocked) {
+    return { error: 'This interaction is blocked. The glitter wall is up.', statusCode: 403 };
   }
 
   const permissionResult = await query(
@@ -108,6 +115,12 @@ export async function getIncomingFriendRequests(userId) {
       LEFT JOIN profiles ON profiles.user_id = users.id
       WHERE friendships.receiver_id = $1
         AND friendships.status = 'pending'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM blocked_users
+          WHERE (blocker_id = $1 AND blocked_id = users.id)
+             OR (blocker_id = users.id AND blocked_id = $1)
+        )
       ORDER BY friendships.created_at ASC
     `,
     [userId]
@@ -125,6 +138,12 @@ export async function getOutgoingFriendRequests(userId) {
       LEFT JOIN profiles ON profiles.user_id = users.id
       WHERE friendships.requester_id = $1
         AND friendships.status = 'pending'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM blocked_users
+          WHERE (blocker_id = $1 AND blocked_id = users.id)
+             OR (blocker_id = users.id AND blocked_id = $1)
+        )
       ORDER BY friendships.created_at ASC
     `,
     [userId]
@@ -196,6 +215,12 @@ export async function getAcceptedFriends(userId) {
       LEFT JOIN profiles ON profiles.user_id = users.id
       WHERE (friendships.requester_id = $1 OR friendships.receiver_id = $1)
         AND friendships.status = 'accepted'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM blocked_users
+          WHERE (blocker_id = $1 AND blocked_id = users.id)
+             OR (blocker_id = users.id AND blocked_id = $1)
+        )
       ORDER BY LOWER(COALESCE(profiles.display_name, users.username)) ASC
     `,
     [userId]
@@ -217,6 +242,12 @@ export async function getTopFriends(userId) {
       INNER JOIN users ON users.id = top_friends.friend_id
       LEFT JOIN profiles ON profiles.user_id = users.id
       WHERE top_friends.user_id = $1
+        AND NOT EXISTS (
+          SELECT 1
+          FROM blocked_users
+          WHERE (blocker_id = $1 AND blocked_id = users.id)
+             OR (blocker_id = users.id AND blocked_id = $1)
+        )
       ORDER BY top_friends.position ASC
     `,
     [userId]
@@ -264,6 +295,12 @@ export async function setTopFriends(userId, friendUserIdsInOrder) {
           )
           WHERE users.id = ANY($2::int[])
             AND friendships.status = 'accepted'
+            AND NOT EXISTS (
+              SELECT 1
+              FROM blocked_users
+              WHERE (blocker_id = $1 AND blocked_id = users.id)
+                 OR (blocker_id = users.id AND blocked_id = $1)
+            )
         `,
         [userId, friendIds]
       );

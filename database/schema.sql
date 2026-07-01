@@ -69,6 +69,15 @@ CREATE TABLE IF NOT EXISTS top_friends (
   CONSTRAINT top_friends_unique_friend UNIQUE (user_id, friend_id)
 );
 
+CREATE TABLE IF NOT EXISTS blocked_users (
+  id SERIAL PRIMARY KEY,
+  blocker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  blocked_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT blocked_users_no_self CHECK (blocker_id <> blocked_id),
+  CONSTRAINT blocked_users_unique_pair UNIQUE (blocker_id, blocked_id)
+);
+
 CREATE TABLE IF NOT EXISTS profile_comments (
   id SERIAL PRIMARY KEY,
   profile_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -96,6 +105,8 @@ CREATE INDEX IF NOT EXISTS profiles_user_id_idx ON profiles(user_id);
 CREATE INDEX IF NOT EXISTS friendships_requester_id_idx ON friendships(requester_id);
 CREATE INDEX IF NOT EXISTS friendships_receiver_id_idx ON friendships(receiver_id);
 CREATE INDEX IF NOT EXISTS top_friends_user_id_idx ON top_friends(user_id);
+CREATE INDEX IF NOT EXISTS blocked_users_blocker_id_idx ON blocked_users(blocker_id);
+CREATE INDEX IF NOT EXISTS blocked_users_blocked_id_idx ON blocked_users(blocked_id);
 CREATE INDEX IF NOT EXISTS profile_comments_profile_user_id_idx ON profile_comments(profile_user_id);
 CREATE INDEX IF NOT EXISTS profile_comments_author_user_id_idx ON profile_comments(author_user_id);
 CREATE INDEX IF NOT EXISTS bulletins_user_id_idx ON bulletins(user_id);

@@ -792,6 +792,66 @@ button {
   font-weight: 900;
 }
 
+.block-user-form {
+  display: grid;
+  grid-template-columns: 1fr 150px;
+  gap: 8px;
+  align-items: end;
+  padding: 10px;
+}
+
+.block-user-form input {
+  min-height: 36px;
+  padding: 7px;
+  border: 3px inset #9bdfff;
+  background: #fff;
+  color: #111;
+  font: inherit;
+}
+
+.block-user-form button,
+.blocked-user-card button,
+.profile-block-button {
+  min-height: 34px;
+  border: 3px outset #ff9de5;
+  background: linear-gradient(#fff73b, #ff9de5);
+  color: #00126f;
+  font: inherit;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.blocked-users-list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.blocked-user-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border: 3px solid #003d9c;
+  background: #fff;
+}
+
+.blocked-user-card div {
+  display: grid;
+  gap: 2px;
+}
+
+.blocked-user-card span {
+  color: #6e006e;
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+}
+
+.profile-block-button {
+  margin-top: 8px;
+}
+
 .bulletins-panel {
   border: 4px double #003d9c;
   background: #fffdea;

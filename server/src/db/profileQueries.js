@@ -278,6 +278,12 @@ export async function getProfileByUsername(username) {
         INNER JOIN users friend_users ON friend_users.id = top_friends.friend_id
         LEFT JOIN profiles friend_profiles ON friend_profiles.user_id = friend_users.id
         WHERE top_friends.user_id = $1
+          AND NOT EXISTS (
+            SELECT 1
+            FROM blocked_users
+            WHERE (blocker_id = top_friends.user_id AND blocked_id = friend_users.id)
+               OR (blocker_id = friend_users.id AND blocked_id = top_friends.user_id)
+          )
         ORDER BY top_friends.position ASC
       `,
       [userId]

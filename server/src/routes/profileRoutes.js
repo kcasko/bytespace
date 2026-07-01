@@ -8,6 +8,7 @@ import {
   updateProfileImageUrl,
   updateBackgroundImageUrl
 } from '../db/profileQueries.js';
+import { isBlockedBetween } from '../db/blockQueries.js';
 import { canViewProfile, getPrivacyForUsername } from '../db/settingsQueries.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
@@ -181,6 +182,19 @@ router.get('/:username', sessionMiddleware, async (req, res) => {
     }
 
     const viewerUserId = req.session?.user?.id || null;
+
+    if (viewerUserId && viewerUserId !== privacy.userId) {
+      const blockStatus = await isBlockedBetween(viewerUserId, privacy.userId);
+
+      if (blockStatus.bBlockedA) {
+        return res.status(403).json({ error: 'This profile is unavailable' });
+      }
+
+      if (blockStatus.aBlockedB) {
+        return res.status(403).json({ error: 'You blocked this user' });
+      }
+    }
+
     const allowed = await canViewProfile(privacy, viewerUserId);
 
     if (!allowed) {

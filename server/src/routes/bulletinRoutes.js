@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isBlockedBetween } from '../db/blockQueries.js';
 import {
   createBulletin,
   deleteOwnBulletin,
@@ -50,6 +51,14 @@ router.get('/user/:username', sessionMiddleware, async (req, res) => {
 
     if (!privacy) {
       return res.status(404).json({ error: 'Profile not found.' });
+    }
+
+    if (req.session?.user?.id && req.session.user.id !== privacy.userId) {
+      const blockStatus = await isBlockedBetween(req.session.user.id, privacy.userId);
+
+      if (blockStatus.blocked) {
+        return res.status(403).json({ error: 'This interaction is blocked. The glitter wall is up.' });
+      }
     }
 
     const allowed = await canViewBulletins(privacy, req.session?.user?.id || null);

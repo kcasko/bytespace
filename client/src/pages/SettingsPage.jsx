@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { blockUser, getBlockedUsers, unblockUser } from '../api/blockApi.js';
 import { getMySettings, updateMySettings } from '../api/settingsApi.js';
 
 const emptySettings = {
@@ -28,6 +29,8 @@ function SelectSetting({ title, name, value, options, helper, onChange }) {
 
 export default function SettingsPage({ currentUser }) {
   const [settings, setSettings] = useState(emptySettings);
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [blockUsername, setBlockUsername] = useState('');
   const [status, setStatus] = useState(currentUser ? 'loading' : 'logged-out');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -45,10 +48,14 @@ export default function SettingsPage({ currentUser }) {
       setError('');
 
       try {
-        const data = await getMySettings();
+        const [data, blockedData] = await Promise.all([
+          getMySettings(),
+          getBlockedUsers()
+        ]);
 
         if (!ignore) {
           setSettings({ ...emptySettings, ...data });
+          setBlockedUsers(blockedData);
           setStatus('ready');
         }
       } catch (err) {
@@ -86,6 +93,42 @@ export default function SettingsPage({ currentUser }) {
     } catch (err) {
       setError(err.message);
       setStatus('ready');
+    }
+  }
+
+  async function submitBlock(event) {
+    event.preventDefault();
+    const username = blockUsername.trim();
+
+    if (!username) {
+      setError('Username is required.');
+      setMessage('');
+      return;
+    }
+
+    setMessage('');
+    setError('');
+
+    try {
+      await blockUser(username);
+      setBlockUsername('');
+      setBlockedUsers(await getBlockedUsers());
+      setMessage('User blocked. The glitter curtain has been slammed shut.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function removeBlock(username) {
+    setMessage('');
+    setError('');
+
+    try {
+      await unblockUser(username);
+      setBlockedUsers((current) => current.filter((user) => user.username !== username));
+      setMessage('User unblocked. Choose chaos responsibly.');
+    } catch (err) {
+      setError(err.message);
     }
   }
 
@@ -168,6 +211,37 @@ export default function SettingsPage({ currentUser }) {
             {status === 'saving' ? 'Saving...' : 'Save Settings'}
           </button>
         </form>
+
+        <section className="settings-section blocked-users-section">
+          <h2>Blocked Users</h2>
+          <form className="block-user-form" onSubmit={submitBlock}>
+            <label>
+              Username
+              <input
+                value={blockUsername}
+                onChange={(event) => setBlockUsername(event.target.value)}
+                placeholder="username to block"
+              />
+            </label>
+            <button type="submit">Block User</button>
+          </form>
+
+          {blockedUsers.length === 0 ? (
+            <div className="friend-empty-note">No blocked users.</div>
+          ) : (
+            <div className="blocked-users-list">
+              {blockedUsers.map((user) => (
+                <article className="blocked-user-card" key={user.id}>
+                  <div>
+                    <strong>{user.displayName}</strong>
+                    <span>@{user.username}</span>
+                  </div>
+                  <button type="button" onClick={() => removeBlock(user.username)}>Unblock</button>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </section>
     </main>
   );

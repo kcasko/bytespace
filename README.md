@@ -894,6 +894,138 @@ This profile is private. The glitter curtain is closed.
 27. Confirm `npm run build` passes in `client/`.
 28. Smoke check comments, bulletins, browse, friends, Top 8, profile editor, theme controls, avatar upload, background upload, and profile song.
 
+### v1.5 Blocking
+
+ByteSpace v1.5 adds basic user blocking. Blocking is account-level and prevents unwanted profile viewing, comments, bulletin access, and friend requests.
+
+#### Database
+
+Blocking uses a dedicated table:
+
+```sql
+blocked_users (
+  id,
+  blocker_id,
+  blocked_id,
+  created_at
+)
+```
+
+Rules:
+
+- `blocker_id` references the user who created the block.
+- `blocked_id` references the blocked user.
+- `UNIQUE (blocker_id, blocked_id)` prevents duplicate rows.
+- `CHECK (blocker_id <> blocked_id)` prevents self-block rows.
+- `database/seed.sql` creates the table and indexes with `IF NOT EXISTS` for local upgrades.
+
+#### Block Routes
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/blocks` | Required | Return users blocked by the logged-in user |
+| `POST` | `/api/blocks/:username` | Required | Block a user |
+| `DELETE` | `/api/blocks/:username` | Required | Unblock a user |
+
+Successful block response:
+
+```json
+{
+  "status": "ok",
+  "message": "User blocked"
+}
+```
+
+Successful unblock response:
+
+```json
+{
+  "status": "ok",
+  "message": "User unblocked"
+}
+```
+
+Blocked user rows include:
+
+- `id`
+- `username`
+- `displayName`
+- `profileImageUrl`
+- `blockedAt`
+
+#### Enforcement
+
+If User A blocks User B:
+
+- User B cannot view User A's profile.
+- User B cannot comment on User A's profile.
+- User B cannot send User A a friend request.
+- User B cannot view User A's bulletins.
+- User B is hidden from User A's browse/search results.
+- User B is excluded from User A's friends list and Top 8 management.
+- Existing friendship and pending friend requests between the users are deleted.
+- Each user is removed from the other's Top 8.
+- Unblocking does not restore friendship or Top 8 placement.
+
+Profile block responses:
+
+- If the profile owner blocked the viewer: `403` with `This profile is unavailable`.
+- If the viewer blocked the profile owner: `403` with `You blocked this user`.
+
+Blocked comments, bulletins, and friend requests return `403` with a useful blocking error.
+
+#### Frontend
+
+`/settings` includes a **Blocked Users** section:
+
+- Username field
+- **Block User** button
+- Blocked user list
+- **Unblock** button per blocked user
+
+Success messages:
+
+```text
+User blocked. The glitter curtain has been slammed shut.
+User unblocked. Choose chaos responsibly.
+```
+
+Public profiles show **Block User** when logged in and viewing another user's profile. The UI asks:
+
+```text
+Are you sure you want to block @username?
+```
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Log in as Keith with `keith` / `password123`.
+5. Visit `/settings`.
+6. Confirm the **Blocked Users** section appears.
+7. Block a test user by username.
+8. Confirm they appear in the blocked list.
+9. Confirm **Unblock** works.
+10. Create or use a second test user.
+11. As Keith, block that user.
+12. Log out.
+13. Log in as the blocked user.
+14. Try viewing `/profile/keith` and confirm blocked UI/403 behavior.
+15. Try commenting on Keith's profile and confirm rejection.
+16. Try sending a friend request to Keith and confirm rejection.
+17. Try viewing Keith's bulletins and confirm rejection.
+18. Log back in as Keith.
+19. Confirm the blocked user does not appear in browse/search.
+20. Confirm the blocked user does not appear in friends list or Top 8 management.
+21. Unblock the user.
+22. Confirm the user can be found again in browse/search.
+23. Confirm the user can send a friend request again if privacy settings allow.
+24. Try blocking self and confirm rejection.
+25. Try blocking the same user twice and confirm no duplicate rows.
+26. Confirm `npm run build` passes in `client/`.
+27. Smoke check comments, bulletins, browse, friends, Top 8, profile editor, theme controls, avatar upload, background upload, profile song, and privacy settings.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

@@ -30,6 +30,18 @@ SET theme_background_repeat = COALESCE(NULLIF(theme_background_repeat, ''), 'rep
     bulletin_visibility = COALESCE(NULLIF(bulletin_visibility, ''), 'public'),
     friend_request_permission = COALESCE(NULLIF(friend_request_permission, ''), 'everyone');
 
+CREATE TABLE IF NOT EXISTS blocked_users (
+  id SERIAL PRIMARY KEY,
+  blocker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  blocked_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT blocked_users_no_self CHECK (blocker_id <> blocked_id),
+  CONSTRAINT blocked_users_unique_pair UNIQUE (blocker_id, blocked_id)
+);
+
+CREATE INDEX IF NOT EXISTS blocked_users_blocker_id_idx ON blocked_users(blocker_id);
+CREATE INDEX IF NOT EXISTS blocked_users_blocked_id_idx ON blocked_users(blocked_id);
+
 INSERT INTO users (username, email, password_hash)
 VALUES
   ('keith', 'keith@example.local', '$2b$12$Y1bOO2S8kZqujUNXLDeZmeT1LnZy.9cIXS2S/L6f5gYuURaUdZAMe'),
