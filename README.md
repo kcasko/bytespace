@@ -1,0 +1,215 @@
+# ByteSpace
+
+ByteSpace is an original retro-inspired social profile app with loud early-2000s energy: profile boxes, Top 8 friends, comments, bulletins, moods, and intentionally chaotic customization.
+
+This pass includes:
+
+- A working Vite React profile prototype.
+- Profile data loaded from PostgreSQL through the Express API, with a development mock fallback when the database is unavailable.
+- Email/password registration and login with bcrypt.
+- Session-based auth using HTTP-only cookies.
+- Server-side mock profile data in `server/src/data/mockProfiles.js`.
+- PostgreSQL schema, seed data, and connection utilities.
+- Retro fixed-width profile styling.
+- A minimal Express API with health, profile, database, and auth routes.
+- Folder structure prepared for auth, uploads, and future profile editing.
+
+## Requirements
+
+- Node.js 20 or newer recommended
+- npm
+- PostgreSQL for database setup and `/api/db/health`
+
+## Frontend
+
+```bash
+cd bytespace/client
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`.
+
+## Backend
+
+```bash
+cd bytespace/server
+npm install
+copy .env.example .env
+npm run dev
+```
+
+The server reads `DATABASE_URL` from `server/.env`.
+
+Example `server/.env`:
+
+```env
+PORT=5000
+CLIENT_ORIGIN=http://localhost:5173
+DATABASE_URL=postgres://postgres:postgres@localhost:55432/bytespace
+SESSION_SECRET=replace-this-with-a-long-random-secret
+NODE_ENV=development
+```
+
+Health check:
+
+```bash
+curl http://localhost:5000/api/health
+```
+
+Database health check:
+
+```bash
+curl http://localhost:5000/api/db/health
+```
+
+Profile API:
+
+```bash
+curl http://localhost:5000/api/profile/keith
+```
+
+Successful profile responses return:
+
+```json
+{
+  "profile": {
+    "username": "keith"
+  }
+}
+```
+
+Missing profiles return `404`:
+
+```json
+{
+  "error": "Profile not found"
+}
+```
+
+Auth API examples:
+
+```bash
+curl -i -c cookies.txt -H "Content-Type: application/json" \
+  -d "{\"username\":\"newuser\",\"email\":\"newuser@example.com\",\"password\":\"password123\"}" \
+  http://localhost:5000/api/auth/register
+
+curl -i -b cookies.txt http://localhost:5000/api/auth/me
+
+curl -i -b cookies.txt -X POST http://localhost:5000/api/auth/logout
+
+curl -i -c cookies.txt -H "Content-Type: application/json" \
+  -d "{\"emailOrUsername\":\"keith\",\"password\":\"password123\"}" \
+  http://localhost:5000/api/auth/login
+```
+
+## PostgreSQL Setup
+
+### Option A: Local PostgreSQL
+
+Create the local database from the repo root, using the credentials that match your machine:
+
+```bash
+createdb bytespace
+psql -d bytespace -f database/schema.sql
+psql -d bytespace -f database/seed.sql
+```
+
+If your local PostgreSQL username or password differs, update `DATABASE_URL` in `server/.env`.
+
+### Option B: Temporary Docker PostgreSQL
+
+```bash
+docker run --name bytespace-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=bytespace -p 55432:5432 -d postgres:16
+```
+
+Use this `DATABASE_URL` in `server/.env`:
+
+```env
+DATABASE_URL=postgres://postgres:postgres@localhost:55432/bytespace
+```
+
+Load the schema and seed data:
+
+```bash
+psql -h localhost -p 55432 -U postgres -d bytespace -f database/schema.sql
+psql -h localhost -p 55432 -U postgres -d bytespace -f database/seed.sql
+```
+
+Seeded development login:
+
+```text
+username: keith
+email: keith@example.local
+password: password123
+```
+
+This password is for local development only. Do not use it in production.
+
+### v0.4 Verification
+
+Start the backend:
+
+```bash
+cd bytespace/server
+npm install
+npm run dev
+```
+
+Verify:
+
+```bash
+curl http://localhost:5000/api/health
+curl http://localhost:5000/api/db/health
+curl http://localhost:5000/api/profile/keith
+```
+
+When the database is available, `/api/profile/:username` reads from PostgreSQL. If the database is unavailable during development, known mock profiles can still be served from `server/src/data/mockProfiles.js` and the server logs a warning.
+
+### v0.5 Auth Verification
+
+1. Re-run `database/schema.sql` and `database/seed.sql`.
+2. Start the backend and frontend.
+3. Open `http://localhost:5173/register` and register a new user.
+4. Confirm the nav shows the username and a Logout button.
+5. Log out.
+6. Log in as the new user from `http://localhost:5173/login`.
+7. Log out again.
+8. Log in as seeded Keith with `keith` / `password123`.
+
+Auth responses return only safe user fields: `id`, `username`, and `email`. Password hashes are never returned to the frontend.
+
+Sessions are stored in PostgreSQL through `connect-pg-simple` using the `session` table in `database/schema.sql`.
+
+## Project Structure
+
+```text
+bytespace/
+  client/
+    src/
+      components/
+      api/
+      pages/
+      data/
+      styles/
+      App.jsx
+      main.jsx
+  server/
+    src/
+      db/
+      data/
+      middleware/
+      routes/
+      controllers/
+      server.js
+    uploads/
+    .env.example
+  database/
+    schema.sql
+    seed.sql
+  README.md
+```
+
+## Next Pass
+
+The next pass should add profile editing, then uploads, comments posting, and connected Top 8 management in later milestones.

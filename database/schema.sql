@@ -1,0 +1,88 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(40) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  display_name VARCHAR(80),
+  headline VARCHAR(255),
+  mood VARCHAR(120),
+  about_me TEXT,
+  who_id_like_to_meet TEXT,
+  general_interests TEXT,
+  music TEXT,
+  movies TEXT,
+  games TEXT,
+  profile_image_url TEXT,
+  background_image_url TEXT,
+  theme_background_color VARCHAR(32),
+  theme_text_color VARCHAR(32),
+  theme_box_color VARCHAR(32),
+  theme_border_color VARCHAR(32),
+  theme_header_color VARCHAR(32),
+  theme_font_family VARCHAR(120),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS friendships (
+  id SERIAL PRIMARY KEY,
+  requester_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT friendships_no_self_friend CHECK (requester_id <> receiver_id),
+  CONSTRAINT friendships_status_check CHECK (status IN ('pending', 'accepted', 'blocked')),
+  CONSTRAINT friendships_unique_pair UNIQUE (requester_id, receiver_id)
+);
+
+CREATE TABLE IF NOT EXISTS top_friends (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  friend_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT top_friends_position_check CHECK (position BETWEEN 1 AND 8),
+  CONSTRAINT top_friends_no_self CHECK (user_id <> friend_id),
+  CONSTRAINT top_friends_unique_position UNIQUE (user_id, position),
+  CONSTRAINT top_friends_unique_friend UNIQUE (user_id, friend_id)
+);
+
+CREATE TABLE IF NOT EXISTS profile_comments (
+  id SERIAL PRIMARY KEY,
+  profile_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  author_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS bulletins (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  body TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS "session" (
+  sid VARCHAR NOT NULL PRIMARY KEY,
+  sess JSON NOT NULL,
+  expire TIMESTAMP(6) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS profiles_user_id_idx ON profiles(user_id);
+CREATE INDEX IF NOT EXISTS friendships_requester_id_idx ON friendships(requester_id);
+CREATE INDEX IF NOT EXISTS friendships_receiver_id_idx ON friendships(receiver_id);
+CREATE INDEX IF NOT EXISTS top_friends_user_id_idx ON top_friends(user_id);
+CREATE INDEX IF NOT EXISTS profile_comments_profile_user_id_idx ON profile_comments(profile_user_id);
+CREATE INDEX IF NOT EXISTS profile_comments_author_user_id_idx ON profile_comments(author_user_id);
+CREATE INDEX IF NOT EXISTS bulletins_user_id_idx ON bulletins(user_id);
+CREATE INDEX IF NOT EXISTS session_expire_idx ON "session"(expire);
