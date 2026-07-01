@@ -50,7 +50,10 @@ function mapProfileRow(row) {
       boxColor: row.theme_box_color,
       borderColor: row.theme_border_color,
       headerColor: row.theme_header_color,
-      fontFamily: row.theme_font_family
+      fontFamily: row.theme_font_family,
+      backgroundRepeat: row.theme_background_repeat || 'repeat',
+      backgroundSize: row.theme_background_size || 'auto',
+      backgroundPosition: row.theme_background_position || 'center'
     }
   };
 }
@@ -73,7 +76,10 @@ function mapEditableProfileRow(row) {
     themeBoxColor: row.theme_box_color || '#f5fbff',
     themeBorderColor: row.theme_border_color || '#003d9c',
     themeHeaderColor: row.theme_header_color || '#004fbf',
-    themeFontFamily: row.theme_font_family || 'Arial'
+    themeFontFamily: row.theme_font_family || 'Arial',
+    themeBackgroundRepeat: row.theme_background_repeat || 'repeat',
+    themeBackgroundSize: row.theme_background_size || 'auto',
+    themeBackgroundPosition: row.theme_background_position || 'center'
   };
 }
 
@@ -97,7 +103,10 @@ export async function getOwnProfileByUserId(userId) {
         theme_box_color,
         theme_border_color,
         theme_header_color,
-        theme_font_family
+        theme_font_family,
+        theme_background_repeat,
+        theme_background_size,
+        theme_background_position
       FROM profiles
       WHERE user_id = $1
     `,
@@ -131,6 +140,9 @@ export async function updateOwnProfile(userId, profileInput) {
         theme_border_color = $14,
         theme_header_color = $15,
         theme_font_family = $16,
+        theme_background_repeat = $17,
+        theme_background_size = $18,
+        theme_background_position = $19,
         updated_at = NOW()
       WHERE user_id = $1
       RETURNING
@@ -148,7 +160,10 @@ export async function updateOwnProfile(userId, profileInput) {
         theme_box_color,
         theme_border_color,
         theme_header_color,
-        theme_font_family
+        theme_font_family,
+        theme_background_repeat,
+        theme_background_size,
+        theme_background_position
     `,
     [
       userId,
@@ -166,7 +181,10 @@ export async function updateOwnProfile(userId, profileInput) {
       profileInput.themeBoxColor,
       profileInput.themeBorderColor,
       profileInput.themeHeaderColor,
-      profileInput.themeFontFamily
+      profileInput.themeFontFamily,
+      profileInput.themeBackgroundRepeat,
+      profileInput.themeBackgroundSize,
+      profileInput.themeBackgroundPosition
     ]
   );
 
@@ -199,7 +217,10 @@ export async function getProfileByUsername(username) {
         profiles.theme_box_color,
         profiles.theme_border_color,
         profiles.theme_header_color,
-        profiles.theme_font_family
+        profiles.theme_font_family,
+        profiles.theme_background_repeat,
+        profiles.theme_background_size,
+        profiles.theme_background_position
       FROM users
       INNER JOIN profiles ON profiles.user_id = users.id
       WHERE LOWER(users.username) = LOWER($1)
@@ -312,4 +333,3 @@ export async function updateBackgroundImageUrl(userId, publicUrl) {
 
   return result.rows[0].background_image_url;
 }
-

@@ -264,9 +264,9 @@ export default function ProfilePage({ currentUser }) {
   const backgroundImageStyle = profile.backgroundImageUrl
     ? {
         backgroundImage: `url(${toAssetUrl(profile.backgroundImageUrl)})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: profile.theme?.backgroundRepeat || 'repeat',
+        backgroundSize: profile.theme?.backgroundSize || 'auto',
+        backgroundPosition: profile.theme?.backgroundPosition || 'center'
       }
     : {};
 

@@ -368,6 +368,65 @@ curl -i -b cookies.txt \
     curl http://localhost:5000/api/profile/keith
     ```
 
+### v0.9 Theme Presets and Preview Polish
+
+ByteSpace v0.9 adds profile theme presets, background image display options, a theme reset control, and a richer live preview in the profile editor.
+
+#### Theme Presets
+
+The editor includes these preset buttons:
+
+- Blue Classic
+- Scene Kid Disaster
+- Cyber Rot
+- Mall Goth
+- VHS Static
+- LimeWire Infection
+
+Clicking a preset updates the local editor state and live preview immediately. Presets do not save automatically; click **Save Profile** to persist changes.
+
+#### Background Display Options
+
+Profiles now store three additional optional theme fields:
+
+- `theme_background_repeat` (`repeat`, `no-repeat`, `repeat-x`, `repeat-y`)
+- `theme_background_size` (`auto`, `cover`, `contain`)
+- `theme_background_position` (`center`, `top`, `bottom`, `left`, `right`)
+
+Safe defaults are `repeat`, `auto`, and `center`.
+
+For an existing local database, run the schema/seed setup again from the repo root:
+
+```bash
+psql -h localhost -p 55432 -U postgres -d bytespace -f database/schema.sql
+psql -h localhost -p 55432 -U postgres -d bytespace -f database/seed.sql
+```
+
+`database/seed.sql` also adds the v0.9 columns with defaults when they are missing.
+
+#### Reset Theme
+
+**Reset Theme** returns theme colors and font to Blue Classic and resets background display to `repeat`, `auto`, and `center`. It updates the preview only; click **Save Profile** to persist.
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Log in as Keith with `keith` / `password123`.
+5. Go to `http://localhost:5173/profile/edit`.
+6. Confirm theme preset buttons appear.
+7. Click each preset and confirm the live preview updates.
+8. Click **Reset Theme** and confirm the preview returns to Blue Classic.
+9. Change mood, headline, a theme preset, background repeat, background size, and background position.
+10. Click **Save Profile** and confirm `Profile saved. Your chaos has been preserved.`
+11. Visit `http://localhost:5173/profile/keith`.
+12. Confirm the saved theme renders on the public profile.
+13. Refresh `/profile/keith` and confirm the theme persists.
+14. Confirm avatar and background image still render.
+15. Confirm guestbook comments still render.
+16. Confirm `npm run build` passes in `client/`.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then connected Top 8 management and messaging.

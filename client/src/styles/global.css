@@ -123,6 +123,26 @@ button {
   background: var(--profile-header, #004fbf);
 }
 
+.profile-themed-shell .profile-card,
+.profile-themed-shell .identity,
+.profile-themed-shell .interests-list dd,
+.profile-themed-shell .comment p {
+  border-color: var(--profile-border, #003d9c);
+  background: var(--profile-box, #f5fbff);
+  color: var(--profile-text, #111);
+}
+
+.profile-themed-shell .profile-hero {
+  border-color: var(--profile-border, #003d9c);
+  background: var(--profile-box, #f5fbff);
+}
+
+.profile-themed-shell .profile-kicker,
+.profile-themed-shell .profile-hero h1,
+.profile-themed-shell .profile-hero p:last-child {
+  color: var(--profile-text, #111);
+}
+
 .retro-box h2 {
   margin: 0;
   padding: 6px 8px;
@@ -605,6 +625,43 @@ button {
   padding: 10px 10px 0;
 }
 
+.editor-helper {
+  margin: 0 0 8px;
+  padding: 7px;
+  border: 2px dashed #003d9c;
+  background: #fff;
+  color: #00126f;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.theme-preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.theme-preset-button,
+.reset-theme-button {
+  min-height: 34px;
+  border: 3px outset #ff9de5;
+  background: linear-gradient(#fff, #fff73b);
+  color: #00126f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.reset-theme-button {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  background: linear-gradient(#fff73b, #9bdfff);
+}
+
 .color-row {
   display: grid;
   grid-template-columns: 52px 1fr;
@@ -629,6 +686,7 @@ button {
   margin: 10px;
   padding: 8px;
   border: 4px solid;
+  min-height: 260px;
 }
 
 .profile-preview-panel h3 {
@@ -640,17 +698,52 @@ button {
 
 .profile-preview-avatar {
   display: block;
-  width: 96px;
-  height: 96px;
-  margin: 0 0 8px;
+  width: 78px;
+  height: 78px;
+  margin: 0;
   object-fit: cover;
   border: 3px ridge #ff00a8;
   background: #111;
 }
 
-.profile-preview-panel div {
+.profile-preview-box,
+.profile-preview-identity {
   padding: 8px;
   border: 3px solid;
+}
+
+.profile-preview-identity {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.profile-preview-identity p,
+.profile-preview-box p {
+  margin: 5px 0 0;
+}
+
+.profile-preview-box {
+  margin-bottom: 8px;
+}
+
+.profile-preview-friends {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.profile-preview-friends span {
+  display: grid;
+  min-height: 32px;
+  place-items: center;
+  border: 2px solid;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .save-profile-button,

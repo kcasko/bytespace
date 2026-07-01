@@ -40,6 +40,12 @@ const colorFields = [
   'themeHeaderColor'
 ];
 
+const optionFields = {
+  themeBackgroundRepeat: ['repeat', 'no-repeat', 'repeat-x', 'repeat-y'],
+  themeBackgroundSize: ['auto', 'cover', 'contain'],
+  themeBackgroundPosition: ['center', 'top', 'bottom', 'left', 'right']
+};
+
 function trimString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -74,6 +80,17 @@ function validateProfileInput(body) {
   }
 
   input.themeFontFamily = themeFontFamily;
+
+  for (const [field, allowedValues] of Object.entries(optionFields)) {
+    const value = trimString(body[field]);
+
+    if (!allowedValues.includes(value)) {
+      return { error: `${field} is not supported.` };
+    }
+
+    input[field] = value;
+  }
+
   return { input };
 }
 

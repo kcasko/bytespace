@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   theme_border_color VARCHAR(32),
   theme_header_color VARCHAR(32),
   theme_font_family VARCHAR(120),
+  theme_background_repeat VARCHAR(20) NOT NULL DEFAULT 'repeat',
+  theme_background_size VARCHAR(20) NOT NULL DEFAULT 'auto',
+  theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

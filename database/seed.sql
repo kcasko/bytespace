@@ -9,6 +9,16 @@ WHERE username = CONCAT('pe', 'ggy')
     WHERE existing.username = 'lacutis'
   );
 
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS theme_background_repeat VARCHAR(20) NOT NULL DEFAULT 'repeat',
+  ADD COLUMN IF NOT EXISTS theme_background_size VARCHAR(20) NOT NULL DEFAULT 'auto',
+  ADD COLUMN IF NOT EXISTS theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center';
+
+UPDATE profiles
+SET theme_background_repeat = COALESCE(NULLIF(theme_background_repeat, ''), 'repeat'),
+    theme_background_size = COALESCE(NULLIF(theme_background_size, ''), 'auto'),
+    theme_background_position = COALESCE(NULLIF(theme_background_position, ''), 'center');
+
 INSERT INTO users (username, email, password_hash)
 VALUES
   ('keith', 'keith@example.local', '$2b$12$Y1bOO2S8kZqujUNXLDeZmeT1LnZy.9cIXS2S/L6f5gYuURaUdZAMe'),
@@ -43,7 +53,10 @@ INSERT INTO profiles (
   theme_box_color,
   theme_border_color,
   theme_header_color,
-  theme_font_family
+  theme_font_family,
+  theme_background_repeat,
+  theme_background_size,
+  theme_background_position
 )
 SELECT
   users.id,
@@ -63,7 +76,10 @@ SELECT
   '#f5fbff',
   '#003d9c',
   '#004fbf',
-  'Arial, Helvetica, sans-serif'
+  'Arial, Helvetica, sans-serif',
+  'repeat',
+  'auto',
+  'center'
 FROM users
 WHERE users.username = 'keith'
 ON CONFLICT (user_id) DO UPDATE SET
@@ -84,6 +100,9 @@ ON CONFLICT (user_id) DO UPDATE SET
   theme_border_color = EXCLUDED.theme_border_color,
   theme_header_color = EXCLUDED.theme_header_color,
   theme_font_family = EXCLUDED.theme_font_family,
+  theme_background_repeat = EXCLUDED.theme_background_repeat,
+  theme_background_size = EXCLUDED.theme_background_size,
+  theme_background_position = EXCLUDED.theme_background_position,
   updated_at = NOW();
 
 INSERT INTO profiles (user_id, display_name)
