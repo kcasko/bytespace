@@ -4,12 +4,12 @@ export async function getProfile(username) {
   const response = await fetch(`${API_BASE_URL}/api/profile/${encodeURIComponent(username)}`, {
     credentials: 'include'
   });
+  const data = await response.json();
 
   if (!response.ok) {
-    throw new Error('Profile not found or server unavailable.');
+    throw new Error(data.error || 'Profile not found or server unavailable.');
   }
 
-  const data = await response.json();
   return data.profile;
 }
 

@@ -6,6 +6,7 @@ import {
   getFriendBulletins,
   getOwnBulletins
 } from '../db/bulletinQueries.js';
+import { canViewBulletins, getPrivacyForUsername } from '../db/settingsQueries.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
 
@@ -43,8 +44,20 @@ function validateBulletinInput(body) {
   };
 }
 
-router.get('/user/:username', async (req, res) => {
+router.get('/user/:username', sessionMiddleware, async (req, res) => {
   try {
+    const privacy = await getPrivacyForUsername(req.params.username);
+
+    if (!privacy) {
+      return res.status(404).json({ error: 'Profile not found.' });
+    }
+
+    const allowed = await canViewBulletins(privacy, req.session?.user?.id || null);
+
+    if (!allowed) {
+      return res.status(403).json({ error: 'These bulletins are private' });
+    }
+
     const bulletins = await getBulletinsForUsername(req.params.username);
     return res.json({ bulletins });
   } catch (error) {

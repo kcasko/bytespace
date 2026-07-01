@@ -1,17 +1,27 @@
 import { Router } from 'express';
 import { createProfileComment, getCommentsForProfileUsername } from '../db/commentQueries.js';
-import { getProfileByUsername } from '../db/profileQueries.js';
+import {
+  canCommentOnProfile,
+  canViewProfile,
+  getPrivacyForUsername
+} from '../db/settingsQueries.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
 
 const router = Router();
 const MAX_COMMENT_LENGTH = 500;
 
-router.get('/:username', async (req, res) => {
+router.get('/:username', sessionMiddleware, async (req, res) => {
   try {
-    const profile = await getProfileByUsername(req.params.username);
+    const privacy = await getPrivacyForUsername(req.params.username);
 
-    if (!profile) {
+    if (!privacy) {
       return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    const allowed = await canViewProfile(privacy, req.session?.user?.id || null);
+
+    if (!allowed) {
+      return res.status(403).json({ error: 'This profile is private' });
     }
 
     const comments = await getCommentsForProfileUsername(req.params.username);
@@ -42,6 +52,24 @@ router.post('/:username', sessionMiddleware, async (req, res) => {
   }
 
   try {
+    const privacy = await getPrivacyForUsername(req.params.username);
+
+    if (!privacy) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    const canView = await canViewProfile(privacy, req.session.user.id);
+
+    if (!canView) {
+      return res.status(403).json({ error: 'This profile is private' });
+    }
+
+    const canComment = await canCommentOnProfile(privacy, req.session.user.id);
+
+    if (!canComment) {
+      return res.status(403).json({ error: 'You do not have permission to comment on this profile.' });
+    }
+
     const comment = await createProfileComment({
       profileUsername: req.params.username,
       authorUserId: req.session.user.id,

@@ -1,7 +1,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export async function getComments(username) {
-  const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(username)}`);
+  const response = await fetch(`${API_BASE_URL}/api/comments/${encodeURIComponent(username)}`, {
+    credentials: 'include'
+  });
   const data = await response.json();
 
   if (!response.ok) {

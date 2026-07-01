@@ -268,6 +268,7 @@ export default function ProfilePage({ currentUser }) {
   const [profile, setProfile] = useState(null);
   const [comments, setComments] = useState([]);
   const [bulletins, setBulletins] = useState([]);
+  const [bulletinError, setBulletinError] = useState('');
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
@@ -283,20 +284,34 @@ export default function ProfilePage({ currentUser }) {
           setStatus('loaded');
         }
 
-        const commentsData = await getComments(username);
+        try {
+          const commentsData = await getComments(username);
 
-        if (!ignore) {
-          setComments(commentsData);
+          if (!ignore) {
+            setComments(commentsData);
+          }
+        } catch (err) {
+          if (!ignore && err.message === 'This profile is private') {
+            setStatus('private');
+          }
         }
 
-        const bulletinData = await getUserBulletins(username);
+        try {
+          const bulletinData = await getUserBulletins(username);
 
-        if (!ignore) {
-          setBulletins(bulletinData);
+          if (!ignore) {
+            setBulletins(bulletinData);
+            setBulletinError('');
+          }
+        } catch (err) {
+          if (!ignore) {
+            setBulletins([]);
+            setBulletinError(err.message);
+          }
         }
-      } catch {
+      } catch (err) {
         if (!ignore) {
-          setStatus('error');
+          setStatus(err.message === 'This profile is private' ? 'private' : 'error');
         }
       }
     }
@@ -312,6 +327,16 @@ export default function ProfilePage({ currentUser }) {
     return (
       <main className="page-shell">
         <div className="retro-state">Loading profile chaos...</div>
+      </main>
+    );
+  }
+
+  if (status === 'private') {
+    return (
+      <main className="page-shell">
+        <div className="retro-state retro-state--error">
+          This profile is private. The glitter curtain is closed.
+        </div>
       </main>
     );
   }
@@ -379,7 +404,17 @@ export default function ProfilePage({ currentUser }) {
             profileUsername={profile.username}
             onCommentPosted={(comment) => setComments((current) => [comment, ...current])}
           />
-          <Bulletins bulletins={bulletins} />
+          {bulletinError ? (
+            <Box title="Bulletin Board">
+              <div className="friend-empty-note">
+                {bulletinError === 'These bulletins are private'
+                  ? 'These bulletins are private.'
+                  : bulletinError}
+              </div>
+            </Box>
+          ) : (
+            <Bulletins bulletins={bulletins} />
+          )}
         </section>
       </div>
     </main>

@@ -8,6 +8,7 @@ import {
   updateProfileImageUrl,
   updateBackgroundImageUrl
 } from '../db/profileQueries.js';
+import { canViewProfile, getPrivacyForUsername } from '../db/settingsQueries.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
 import {
@@ -169,10 +170,23 @@ router.put('/me', sessionMiddleware, requireAuth, async (req, res) => {
   }
 });
 
-router.get('/:username', async (req, res) => {
+router.get('/:username', sessionMiddleware, async (req, res) => {
   const username = req.params.username.toLowerCase();
 
   try {
+    const privacy = await getPrivacyForUsername(username);
+
+    if (!privacy) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    const viewerUserId = req.session?.user?.id || null;
+    const allowed = await canViewProfile(privacy, viewerUserId);
+
+    if (!allowed) {
+      return res.status(403).json({ error: 'This profile is private' });
+    }
+
     const profile = await getProfileByUsername(username);
 
     if (!profile) {

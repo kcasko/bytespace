@@ -15,12 +15,20 @@ ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center',
   ADD COLUMN IF NOT EXISTS profile_song_title VARCHAR(120),
   ADD COLUMN IF NOT EXISTS profile_song_artist VARCHAR(120),
-  ADD COLUMN IF NOT EXISTS profile_song_url VARCHAR(500);
+  ADD COLUMN IF NOT EXISTS profile_song_url VARCHAR(500),
+  ADD COLUMN IF NOT EXISTS profile_visibility VARCHAR(20) NOT NULL DEFAULT 'public',
+  ADD COLUMN IF NOT EXISTS comment_permission VARCHAR(20) NOT NULL DEFAULT 'everyone',
+  ADD COLUMN IF NOT EXISTS bulletin_visibility VARCHAR(20) NOT NULL DEFAULT 'public',
+  ADD COLUMN IF NOT EXISTS friend_request_permission VARCHAR(30) NOT NULL DEFAULT 'everyone';
 
 UPDATE profiles
 SET theme_background_repeat = COALESCE(NULLIF(theme_background_repeat, ''), 'repeat'),
     theme_background_size = COALESCE(NULLIF(theme_background_size, ''), 'auto'),
-    theme_background_position = COALESCE(NULLIF(theme_background_position, ''), 'center');
+    theme_background_position = COALESCE(NULLIF(theme_background_position, ''), 'center'),
+    profile_visibility = COALESCE(NULLIF(profile_visibility, ''), 'public'),
+    comment_permission = COALESCE(NULLIF(comment_permission, ''), 'everyone'),
+    bulletin_visibility = COALESCE(NULLIF(bulletin_visibility, ''), 'public'),
+    friend_request_permission = COALESCE(NULLIF(friend_request_permission, ''), 'everyone');
 
 INSERT INTO users (username, email, password_hash)
 VALUES

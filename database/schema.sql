@@ -33,8 +33,16 @@ CREATE TABLE IF NOT EXISTS profiles (
   profile_song_title VARCHAR(120),
   profile_song_artist VARCHAR(120),
   profile_song_url VARCHAR(500),
+  profile_visibility VARCHAR(20) NOT NULL DEFAULT 'public',
+  comment_permission VARCHAR(20) NOT NULL DEFAULT 'everyone',
+  bulletin_visibility VARCHAR(20) NOT NULL DEFAULT 'public',
+  friend_request_permission VARCHAR(30) NOT NULL DEFAULT 'everyone',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT profiles_profile_visibility_check CHECK (profile_visibility IN ('public', 'friends', 'private')),
+  CONSTRAINT profiles_comment_permission_check CHECK (comment_permission IN ('everyone', 'friends', 'none')),
+  CONSTRAINT profiles_bulletin_visibility_check CHECK (bulletin_visibility IN ('public', 'friends', 'private')),
+  CONSTRAINT profiles_friend_request_permission_check CHECK (friend_request_permission IN ('everyone', 'friends_of_friends', 'none'))
 );
 
 CREATE TABLE IF NOT EXISTS friendships (

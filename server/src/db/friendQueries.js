@@ -1,4 +1,5 @@
 import { pool, query } from './pool.js';
+import { shareAcceptedFriend } from './settingsQueries.js';
 
 function mapFriendRow(row) {
   return {
@@ -48,6 +49,29 @@ export async function sendFriendRequest(requesterId, receiverUsername) {
 
   if (receiver.id === requesterId) {
     return { error: 'You cannot send a friend request to yourself.', statusCode: 400 };
+  }
+
+  const permissionResult = await query(
+    `
+      SELECT friend_request_permission
+      FROM profiles
+      WHERE user_id = $1
+      LIMIT 1
+    `,
+    [receiver.id]
+  );
+  const friendRequestPermission = permissionResult.rows[0]?.friend_request_permission || 'everyone';
+
+  if (friendRequestPermission === 'none') {
+    return { error: 'This user is not accepting friend requests.', statusCode: 403 };
+  }
+
+  if (friendRequestPermission === 'friends_of_friends') {
+    const sharesFriend = await shareAcceptedFriend(requesterId, receiver.id);
+
+    if (!sharesFriend) {
+      return { error: 'This user only accepts friend requests from friends of friends.', statusCode: 403 };
+    }
   }
 
   const existing = await getFriendshipBetweenUsers(requesterId, receiver.id);

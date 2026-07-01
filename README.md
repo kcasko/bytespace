@@ -758,6 +758,142 @@ If a valid URL exists, the page shows a normal `Open song link` anchor. There ar
 15. Confirm `npm run build` passes in `client/`.
 16. Smoke check comments, bulletins, browse, friends, Top 8, profile editor, theme controls, avatar upload, and background upload.
 
+### v1.4 Privacy Settings
+
+ByteSpace v1.4 adds a basic account and privacy control panel for profile visibility, comments, bulletins, and friend requests.
+
+#### Database Fields
+
+The `profiles` table includes:
+
+- `profile_visibility`
+- `comment_permission`
+- `bulletin_visibility`
+- `friend_request_permission`
+
+Defaults:
+
+- `profile_visibility = public`
+- `comment_permission = everyone`
+- `bulletin_visibility = public`
+- `friend_request_permission = everyone`
+
+`database/seed.sql` uses `ADD COLUMN IF NOT EXISTS` and backfills defaults for existing local databases.
+
+#### Settings Routes
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/settings/me` | Required | Return the logged-in user's settings |
+| `PUT` | `/api/settings/me` | Required | Validate and update settings |
+
+`PUT /api/settings/me` accepts:
+
+```json
+{
+  "profileVisibility": "public",
+  "commentPermission": "everyone",
+  "bulletinVisibility": "public",
+  "friendRequestPermission": "everyone"
+}
+```
+
+Allowed values:
+
+- `profileVisibility`: `public`, `friends`, `private`
+- `commentPermission`: `everyone`, `friends`, `none`
+- `bulletinVisibility`: `public`, `friends`, `private`
+- `friendRequestPermission`: `everyone`, `friends_of_friends`, `none`
+
+Unsupported values return `400`.
+
+#### Enforcement
+
+Profile visibility:
+
+- `public`: anyone can view.
+- `friends`: only the owner and accepted friends can view.
+- `private`: only the owner can view.
+- Forbidden profile reads return `403` with `This profile is private`.
+
+Comments:
+
+- `everyone`: any logged-in user can comment.
+- `friends`: only accepted friends and the profile owner can comment.
+- `none`: only the profile owner can comment.
+
+Bulletins:
+
+- `public`: anyone can read profile bulletins.
+- `friends`: only accepted friends and the owner can read.
+- `private`: only the owner can read.
+- Forbidden bulletin reads return `403` with `These bulletins are private`.
+
+Friend requests:
+
+- `everyone`: any logged-in user can send a request.
+- `friends_of_friends`: requester must share at least one accepted friend with the receiver.
+- `none`: incoming friend requests are rejected.
+
+Browse/search remains public-safe and never returns email, password hashes, session data, or private internals.
+
+#### Frontend
+
+Open:
+
+```text
+http://localhost:5173/settings
+```
+
+Logged-out users see:
+
+```text
+Log in before adjusting your privacy force field.
+```
+
+Logged-in users can save settings from the **Account & Privacy Settings** page. Successful saves show:
+
+```text
+Settings saved. Your boundaries have been weaponized.
+```
+
+Public profile forbidden UI shows:
+
+```text
+This profile is private. The glitter curtain is closed.
+```
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Log in as Keith with `keith` / `password123`.
+5. Visit `/settings`.
+6. Confirm settings load.
+7. Change profile visibility to `private`.
+8. Save settings.
+9. Log out.
+10. Visit `/profile/keith`.
+11. Confirm the private profile UI appears.
+12. Log back in as Keith.
+13. Set profile visibility back to `public`.
+14. Confirm `/profile/keith` works logged out again.
+15. Set comment permission to `none`.
+16. Log in as another test user.
+17. Try commenting on Keith's profile and confirm rejection.
+18. Set comment permission back to `everyone`.
+19. Set bulletin visibility to `private`.
+20. Log out.
+21. Visit `/profile/keith` or `/api/bulletins/user/keith` and confirm bulletins are hidden/forbidden.
+22. Set bulletin visibility back to `public`.
+23. Set friend request permission to `none`.
+24. Log in as another user.
+25. Try sending a friend request to Keith and confirm rejection.
+26. Set friend request permission back to `everyone`.
+27. Confirm `npm run build` passes in `client/`.
+28. Smoke check comments, bulletins, browse, friends, Top 8, profile editor, theme controls, avatar upload, background upload, and profile song.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

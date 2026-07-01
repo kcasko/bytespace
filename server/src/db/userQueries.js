@@ -5,8 +5,8 @@ function mapUserCard(row, currentUserId) {
     id: row.id,
     username: row.username,
     displayName: row.display_name || row.username,
-    headline: row.headline || '',
-    mood: row.mood || '',
+    headline: row.profile_visibility === 'private' ? '' : row.headline || '',
+    mood: row.profile_visibility === 'private' ? '' : row.mood || '',
     profileImageUrl: row.profile_image_url || '',
     createdAt: row.created_at
   };
@@ -43,6 +43,7 @@ export async function searchUsers({ query = '', currentUserId = null }) {
         profiles.headline,
         profiles.mood,
         profiles.profile_image_url,
+        profiles.profile_visibility,
         friendships.status AS friendship_status,
         friendships.requester_id AS friendship_requester_id,
         friendships.receiver_id AS friendship_receiver_id
