@@ -1248,6 +1248,128 @@ The dashboard response does not include email, password hashes, session data, or
 18. Smoke check `/profile/keith`, `/profile/edit`, `/browse`, `/friends`, `/bulletins`, `/settings`, avatar upload, and background upload.
 19. Confirm `npm run build` passes.
 
+### v2.0 Deployable Demo
+
+ByteSpace v2.0 prepares a deployable demo build. No actual deployment was performed in this repo pass because no server or platform credentials were provided.
+
+#### Deployment Approach
+
+Preferred demo path:
+
+- Single VPS or ByteGeist homelab
+- PostgreSQL on a managed service or the host
+- Express server behind HTTPS/reverse proxy
+- `client/dist` served by Express after `npm run build`
+- `/api` and `/uploads` handled by the same Express server
+- Persistent `UPLOADS_DIR` with backups
+
+Render/Railway-style split deployment is also supported:
+
+- backend web service
+- frontend static site
+- managed PostgreSQL
+- persistent upload disk if available
+
+#### Environment Variables
+
+Server:
+
+- `NODE_ENV=production`
+- `PORT`
+- `CLIENT_ORIGIN`
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `TRUST_PROXY`
+- `SESSION_COOKIE_SAMESITE`
+- `UPLOADS_DIR`
+
+Client:
+
+- `VITE_API_BASE_URL`
+
+For same-origin production where Express serves `client/dist`, `VITE_API_BASE_URL` can be left unset and the built client will call the same origin. In local dev, the fallback remains `http://localhost:5000`.
+
+For split frontend/API deployment, set `VITE_API_BASE_URL` to the deployed backend URL before building the client, and set `CLIENT_ORIGIN` to the exact frontend origin.
+
+#### Build And Start
+
+Install dependencies:
+
+```bash
+npm --prefix client install
+npm --prefix server install
+```
+
+Build frontend:
+
+```bash
+npm run build
+```
+
+Start backend/demo server:
+
+```bash
+cd server
+NODE_ENV=production npm start
+```
+
+On PowerShell:
+
+```powershell
+$env:NODE_ENV='production'; npm start
+```
+
+The production server serves:
+
+- `/api/*`
+- `/uploads/*`
+- built React routes from `client/dist` when the build exists
+
+#### Reverse Proxy Notes
+
+- Use HTTPS. Production cookies are secure.
+- Set `TRUST_PROXY=true` behind Nginx, Caddy, Apache, Render, Railway, or similar.
+- Set `CLIENT_ORIGIN` to the public frontend origin.
+- Route `/api` to Express.
+- Route `/uploads` to Express or safely serve the uploads directory.
+- Keep `UPLOADS_DIR` on persistent disk.
+
+#### PostgreSQL Setup
+
+Fresh DB:
+
+```bash
+psql "$DATABASE_URL" -f database/schema.sql
+```
+
+Demo seed data:
+
+```bash
+psql "$DATABASE_URL" -f database/seed.sql
+```
+
+`seed.sql` creates demo users and the Keith login. Change or delete seeded passwords before any public demo.
+
+#### Upload Storage Warning
+
+Local uploads are acceptable for a single-server demo. Back up `UPLOADS_DIR`, keep it persistent between deploys, and do not use this layout for multi-instance production without object storage.
+
+#### Production Smoke Test
+
+1. Landing page loads.
+2. `/api/health` works.
+3. `/api/db/health` works.
+4. Login works.
+5. Dashboard loads.
+6. Public profile loads.
+7. Avatar upload works.
+8. Background upload works.
+9. Guestbook comment works.
+10. Bulletin create/delete works.
+11. Friend request works.
+12. Private profile blocks public users.
+13. Block/unblock works.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

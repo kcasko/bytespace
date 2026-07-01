@@ -8,7 +8,7 @@ import { getProfile } from '../api/profileApi.js';
 const fallbackProfileImage =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=500&q=80';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 function toAssetUrl(url) {
   if (!url) return '';

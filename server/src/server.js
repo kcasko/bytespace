@@ -1,6 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import blockRoutes from './routes/blockRoutes.js';
 import bulletinRoutes from './routes/bulletinRoutes.js';
@@ -17,6 +20,10 @@ import { uploadsRoot } from './middleware/uploadMiddleware.js';
 const app = express();
 const port = process.env.PORT || 5000;
 const environment = process.env.NODE_ENV || 'development';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDistPath = path.resolve(__dirname, '..', '..', 'client', 'dist');
+const clientIndexPath = path.join(clientDistPath, 'index.html');
 
 if (process.env.TRUST_PROXY === 'true' || environment === 'production') {
   app.set('trust proxy', 1);
@@ -51,6 +58,18 @@ app.use('/api/friends', friendRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/users', userRoutes);
+
+if (environment === 'production' && fs.existsSync(clientIndexPath)) {
+  app.use(express.static(clientDistPath));
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+      return next();
+    }
+
+    return res.sendFile(clientIndexPath);
+  });
+}
 
 app.listen(port, () => {
   console.log(`ByteSpace API listening on http://localhost:${port}`);
