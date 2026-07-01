@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { getComments, postComment } from '../api/commentApi.js';
 import { getProfile } from '../api/profileApi.js';
 
 const fallbackProfileImage =
@@ -80,15 +81,90 @@ function TopFriends({ friends }) {
   );
 }
 
-function Comments({ comments }) {
+function formatCommentDate(value) {
+  if (!value) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(new Date(value));
+}
+
+function Comments({ comments, currentUser, profileUsername, onCommentPosted }) {
+  const [body, setBody] = useState('');
+  const [status, setStatus] = useState('idle');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  async function submitComment(event) {
+    event.preventDefault();
+    const trimmedBody = body.trim();
+    setError('');
+    setMessage('');
+
+    if (!trimmedBody) {
+      setError('Comment cannot be empty.');
+      return;
+    }
+
+    if (trimmedBody.length > 500) {
+      setError('Comment is too long.');
+      return;
+    }
+
+    setStatus('posting');
+
+    try {
+      const comment = await postComment(profileUsername, trimmedBody);
+      onCommentPosted(comment);
+      setBody('');
+      setMessage('Comment posted to the guestbook.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setStatus('idle');
+    }
+  }
+
   return (
     <Box title="Profile Comments">
+      {currentUser ? (
+        <form className="comment-form" onSubmit={submitComment}>
+          <label>
+            Sign the guestbook
+            <textarea
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              maxLength="500"
+            />
+          </label>
+          <div className="comment-form__footer">
+            <span>{body.trim().length}/500</span>
+            <button type="submit" disabled={status === 'posting'}>
+              {status === 'posting' ? 'Posting...' : 'Post Comment'}
+            </button>
+          </div>
+          {message && <div className="comment-success">{message}</div>}
+          {error && <div className="comment-error">{error}</div>}
+        </form>
+      ) : (
+        <div className="comment-login-prompt">Log in to leave a comment in the guestbook.</div>
+      )}
       <div className="comments-list">
         {comments.map((comment) => (
-          <article className="comment" key={`${comment.author}-${comment.date}`}>
+          <article
+            className="comment"
+            key={comment.id || `${comment.author}-${comment.date || comment.createdAt}-${comment.body}`}
+          >
             <div className="comment__meta">
               <strong>{comment.author}</strong>
-              <span>{comment.date}</span>
+              {comment.authorUsername && <span>@{comment.authorUsername}</span>}
+              <span>{comment.createdAt ? formatCommentDate(comment.createdAt) : comment.date}</span>
             </div>
             <p>{comment.body}</p>
           </article>
@@ -113,9 +189,10 @@ function Bulletins({ bulletins }) {
   );
 }
 
-export default function ProfilePage() {
+export default function ProfilePage({ currentUser }) {
   const { username = 'keith' } = useParams();
   const [profile, setProfile] = useState(null);
+  const [comments, setComments] = useState([]);
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
@@ -127,7 +204,14 @@ export default function ProfilePage() {
 
         if (!ignore) {
           setProfile(profileData);
+          setComments(profileData.comments || []);
           setStatus('loaded');
+        }
+
+        const commentsData = await getComments(username);
+
+        if (!ignore) {
+          setComments(commentsData);
         }
       } catch {
         if (!ignore) {
@@ -193,7 +277,12 @@ export default function ProfilePage() {
           </Box>
 
           <TopFriends friends={profile.topFriends} />
-          <Comments comments={profile.comments} />
+          <Comments
+            comments={comments}
+            currentUser={currentUser}
+            profileUsername={profile.username}
+            onCommentPosted={(comment) => setComments((current) => [comment, ...current])}
+          />
           <Bulletins bulletins={profile.bulletins} />
         </section>
       </div>

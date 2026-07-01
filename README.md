@@ -193,6 +193,34 @@ Sessions are stored in PostgreSQL through `connect-pg-simple` using the `session
 8. Visit `http://localhost:5173/profile/keith`.
 9. Confirm the public profile shows the saved updates.
 
+### v0.7 Profile Comments Verification
+
+1. Start PostgreSQL.
+2. Start the backend and frontend.
+3. Log in as seeded Keith with `keith` / `password123`.
+4. Visit `http://localhost:5173/profile/keith`.
+5. Post a guestbook comment.
+6. Confirm it appears without a full page reload.
+7. Refresh the page and confirm the comment persists.
+8. Log out.
+9. Confirm the profile shows a login prompt instead of the comment form.
+10. Confirm empty comments and comments over 500 characters are rejected.
+11. Confirm comment bodies render as plain text, not HTML.
+
+Comment API:
+
+```bash
+curl http://localhost:5000/api/comments/keith
+```
+
+Authenticated comment posting uses the same HTTP-only session cookie as login:
+
+```bash
+curl -i -b cookies.txt -H "Content-Type: application/json" \
+  -d "{\"body\":\"Thanks for the add.\"}" \
+  http://localhost:5000/api/comments/keith
+```
+
 ## Project Structure
 
 ```text

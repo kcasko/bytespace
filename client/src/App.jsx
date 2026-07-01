@@ -45,7 +45,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/profile/keith" replace />} />
         <Route path="/profile/edit" element={<EditProfilePage currentUser={currentUser} />} />
-        <Route path="/profile/:username" element={<ProfilePage />} />
+        <Route path="/profile/:username" element={<ProfilePage currentUser={currentUser} />} />
         <Route path="/login" element={<LoginPage onAuth={setCurrentUser} />} />
         <Route path="/register" element={<RegisterPage onAuth={setCurrentUser} />} />
       </Routes>
