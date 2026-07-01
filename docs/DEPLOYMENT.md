@@ -17,6 +17,12 @@ SESSION_SECRET=replace-with-a-long-random-production-secret
 UPLOADS_DIR=uploads
 TRUST_PROXY=true
 SESSION_COOKIE_SAMESITE=lax
+AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_MAX=10
+WRITE_RATE_LIMIT_WINDOW_MS=900000
+WRITE_RATE_LIMIT_MAX=60
+UPLOAD_RATE_LIMIT_WINDOW_MS=900000
+UPLOAD_RATE_LIMIT_MAX=30
 ```
 
 Client variables:
@@ -176,6 +182,37 @@ Production cookies use:
 
 Different-domain frontend/API deployments may require `SESSION_COOKIE_SAMESITE=none` and HTTPS.
 
+## Security Headers And Rate Limits
+
+ByteSpace uses Helmet for baseline security headers. Content Security Policy is currently deferred because profile images, uploaded backgrounds, local dev origins, and future profile-song link behavior need a tested policy before enforcement.
+
+The server applies JSON body parsing with a `100kb` limit. Multer upload limits still apply separately for avatar/background uploads.
+
+Rate limits return:
+
+```json
+{
+  "error": "Too many requests. Try again later."
+}
+```
+
+Default limits:
+
+- Auth login/register: `10` requests per `15` minutes per IP.
+- Write actions: `60` requests per `15` minutes per IP.
+- Upload actions: `30` requests per `15` minutes per IP.
+
+Tuning variables:
+
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX`
+- `WRITE_RATE_LIMIT_WINDOW_MS`
+- `WRITE_RATE_LIMIT_MAX`
+- `UPLOAD_RATE_LIMIT_WINDOW_MS`
+- `UPLOAD_RATE_LIMIT_MAX`
+
+These limits are a basic safety net, not a full abuse-prevention system.
+
 ## Uploads
 
 Uploaded avatars and backgrounds are served from `/uploads`.
@@ -197,6 +234,8 @@ For production with real users, add a formal migration tool before changing sche
 - No raw custom CSS yet.
 - Local uploads are not cloud storage.
 - `database/seed.sql` creates demo users, including Keith with the documented dev password. Change or remove seeded credentials before public use.
+- Rate limiting is basic and should be paired with platform logs/firewalling for public deployments.
+- CSP is deferred until it can be tested against uploads, local dev, and external profile-song links.
 - Do not commit `.env` files.
 - Do not commit uploaded user files.
 

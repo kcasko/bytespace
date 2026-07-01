@@ -1051,6 +1051,12 @@ Required server variables:
 - `DATABASE_URL`
 - `SESSION_SECRET`
 - `UPLOADS_DIR`
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX`
+- `WRITE_RATE_LIMIT_WINDOW_MS`
+- `WRITE_RATE_LIMIT_MAX`
+- `UPLOAD_RATE_LIMIT_WINDOW_MS`
+- `UPLOAD_RATE_LIMIT_MAX`
 
 Optional deployment variables:
 
@@ -1159,6 +1165,7 @@ This project does not yet have a formal migration tool. For production with real
 - Do not commit uploaded user files.
 
 Detailed deployment options are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Security notes are documented in [docs/SECURITY.md](docs/SECURITY.md).
 
 ### v1.7 Homepage/Dashboard
 
@@ -1369,6 +1376,71 @@ Local uploads are acceptable for a single-server demo. Back up `UPLOADS_DIR`, ke
 11. Friend request works.
 12. Private profile blocks public users.
 13. Block/unblock works.
+
+### v2.1 Production Hardening
+
+ByteSpace v2.1 adds a focused security/reliability pass before real deployment.
+
+#### Security Headers
+
+The Express server uses Helmet for baseline security headers. Content Security Policy is intentionally deferred until it can be tested against uploaded images/backgrounds, local dev origins, and external profile-song links.
+
+Helmet is configured to keep dev and production image loading compatible with the Vite frontend and `/uploads`.
+
+#### Rate Limits
+
+Default per-IP limits:
+
+- Auth login/register: `10` requests per `15` minutes.
+- Write actions: `60` requests per `15` minutes.
+- Upload actions: `30` requests per `15` minutes.
+
+Protected routes:
+
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `POST /api/comments/:username`
+- `POST /api/bulletins`
+- `POST /api/friends/request/:username`
+- `POST /api/profile/me/avatar`
+- `POST /api/profile/me/background`
+
+429 response:
+
+```json
+{
+  "error": "Too many requests. Try again later."
+}
+```
+
+Rate limit tuning:
+
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX`
+- `WRITE_RATE_LIMIT_WINDOW_MS`
+- `WRITE_RATE_LIMIT_MAX`
+- `UPLOAD_RATE_LIMIT_WINDOW_MS`
+- `UPLOAD_RATE_LIMIT_MAX`
+
+These limits are basic hardening, not complete abuse prevention.
+
+#### Request And Error Handling
+
+- JSON body parsing uses `100kb` limit.
+- Unknown `/api` routes return `404` with `{ "error": "API route not found" }`.
+- Central error handling returns JSON for API routes.
+- Production API errors do not include stack traces.
+- Existing route-level error handling remains in place.
+
+#### Security Checklist
+
+- Use HTTPS.
+- Set a strong `SESSION_SECRET`.
+- Set `TRUST_PROXY=true` behind a reverse proxy.
+- Set exact `CLIENT_ORIGIN`; do not use wildcard CORS with credentials.
+- Back up `UPLOADS_DIR`.
+- Remove or change seeded demo credentials before public deployment.
+- Remember: no email verification, password reset, or formal migration tool yet.
 
 ## Next Pass
 

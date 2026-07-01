@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,6 +16,13 @@ import profileRoutes from './routes/profileRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { sessionMiddleware } from './middleware/sessionMiddleware.js';
+import {
+  apiNotFoundHandler,
+  authRateLimiter,
+  errorHandler,
+  uploadRateLimiter,
+  writeRateLimiter
+} from './middleware/securityMiddleware.js';
 import { uploadsRoot } from './middleware/uploadMiddleware.js';
 
 const app = express();
@@ -33,7 +41,11 @@ app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   credentials: true
 }));
-app.use(express.json());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+app.use(express.json({ limit: '100kb' }));
 
 // Serve uploaded user images from UPLOADS_DIR as /uploads/*.
 // Local disk is acceptable for a single-server demo; production should plan
@@ -48,6 +60,12 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+app.post(['/api/auth/login', '/api/auth/register'], authRateLimiter);
+app.post('/api/comments/:username', writeRateLimiter);
+app.post('/api/bulletins', writeRateLimiter);
+app.post('/api/friends/request/:username', writeRateLimiter);
+app.post(['/api/profile/me/avatar', '/api/profile/me/background'], uploadRateLimiter);
+
 app.use('/api/auth', sessionMiddleware, authRoutes);
 app.use('/api/blocks', blockRoutes);
 app.use('/api/bulletins', bulletinRoutes);
@@ -58,6 +76,7 @@ app.use('/api/friends', friendRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/users', userRoutes);
+app.use(apiNotFoundHandler);
 
 if (environment === 'production' && fs.existsSync(clientIndexPath)) {
   app.use(express.static(clientDistPath));
@@ -70,6 +89,8 @@ if (environment === 'production' && fs.existsSync(clientIndexPath)) {
     return res.sendFile(clientIndexPath);
   });
 }
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`ByteSpace API listening on http://localhost:${port}`);
