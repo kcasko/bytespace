@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { getMe, logout } from './api/authApi.js';
 import Header from './components/Header.jsx';
 import BrowsePage from './pages/BrowsePage.jsx';
 import BulletinsPage from './pages/BulletinsPage.jsx';
+import DashboardPage from './pages/DashboardPage.jsx';
 import EditProfilePage from './pages/EditProfilePage.jsx';
 import FriendsPage from './pages/FriendsPage.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
@@ -47,7 +49,10 @@ export default function App() {
     <>
       <Header currentUser={currentUser} onLogout={handleLogout} />
       <Routes>
-        <Route path="/" element={<Navigate to="/profile/keith" replace />} />
+        <Route
+          path="/"
+          element={currentUser ? <DashboardPage currentUser={currentUser} /> : <LandingPage />}
+        />
         <Route path="/browse" element={<BrowsePage currentUser={currentUser} />} />
         <Route path="/bulletins" element={<BulletinsPage currentUser={currentUser} />} />
         <Route path="/friends" element={<FriendsPage currentUser={currentUser} />} />

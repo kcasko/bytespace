@@ -1160,6 +1160,94 @@ This project does not yet have a formal migration tool. For production with real
 
 Detailed deployment options are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
+### v1.7 Homepage/Dashboard
+
+ByteSpace v1.7 adds a real home experience without adding a new social system.
+
+#### Landing Page
+
+Logged-out visitors at `/` now see a retro landing page with:
+
+- ByteSpace title and tagline
+- Register, Login, and Browse Profiles links
+- Feature callouts for profile customization, Top 8, bulletins, guestbook comments, browse, and profile songs
+- A small fake profile preview card
+
+#### Logged-In Dashboard
+
+Logged-in users at `/` now see **Your ByteSpace Command Center** with:
+
+- Profile summary
+- Mood/headline/avatar
+- View My Profile and Edit Profile shortcuts
+- Quick links for profile editing, browse, friends, bulletins, and settings
+- Counts for friends, Top 8, incoming/outgoing requests, bulletins, comments, and blocked users
+- Incoming friend request preview
+- Recent friend bulletin preview
+- Recent profile comment preview
+
+#### Dashboard API
+
+Authenticated route:
+
+```http
+GET /api/dashboard/me
+```
+
+Response shape:
+
+```json
+{
+  "user": {
+    "id": 1,
+    "username": "keith"
+  },
+  "profile": {
+    "displayName": "Keith",
+    "headline": "...",
+    "mood": "...",
+    "profileImageUrl": "...",
+    "backgroundImageUrl": "..."
+  },
+  "counts": {
+    "friends": 8,
+    "incomingRequests": 0,
+    "outgoingRequests": 0,
+    "topFriends": 8,
+    "bulletins": 2,
+    "comments": 4,
+    "blockedUsers": 0
+  },
+  "incomingRequests": [],
+  "recentFriendBulletins": [],
+  "recentProfileComments": []
+}
+```
+
+The dashboard response does not include email, password hashes, session data, or internal auth fields. Dashboard lists exclude blocked relationships where practical.
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Visit `/` while logged out.
+5. Confirm the landing page appears.
+6. Confirm Register, Login, and Browse Profiles links work.
+7. Visit `/browse` logged out and confirm browse still works.
+8. Log in as Keith with `keith` / `password123`.
+9. Visit `/`.
+10. Confirm the dashboard appears.
+11. Confirm the welcome panel shows Keith/profile info.
+12. Confirm counts render.
+13. Confirm quick action links work.
+14. Confirm incoming requests preview or empty state appears.
+15. Confirm friend bulletins preview or empty state appears.
+16. Confirm profile comments preview or empty state appears.
+17. Confirm `GET /api/dashboard/me` works and does not expose `email` or `password_hash`.
+18. Smoke check `/profile/keith`, `/profile/edit`, `/browse`, `/friends`, `/bulletins`, `/settings`, avatar upload, and background upload.
+19. Confirm `npm run build` passes.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.
