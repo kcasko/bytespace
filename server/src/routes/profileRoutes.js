@@ -29,7 +29,10 @@ const textFieldLimits = {
   generalInterests: 1000,
   music: 1000,
   movies: 1000,
-  games: 1000
+  games: 1000,
+  profileSongTitle: 120,
+  profileSongArtist: 120,
+  profileSongUrl: 500
 };
 
 const colorFields = [
@@ -61,6 +64,20 @@ function validateProfileInput(body) {
     }
 
     input[field] = value;
+  }
+
+  if (input.profileSongUrl) {
+    let parsedUrl;
+
+    try {
+      parsedUrl = new URL(input.profileSongUrl);
+    } catch {
+      return { error: 'profileSongUrl must be a valid http:// or https:// URL.' };
+    }
+
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return { error: 'profileSongUrl must use http:// or https://.' };
+    }
   }
 
   for (const field of colorFields) {

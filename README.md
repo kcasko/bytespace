@@ -685,6 +685,79 @@ Public profiles fetch recent bulletins through `/api/bulletins/user/:username` a
 22. Confirm friend bulletins display for Keith.
 23. Confirm `npm run build` passes in `client/`.
 
+### v1.3 Profile Song
+
+ByteSpace v1.3 adds a simple profile song box without hosting music files. Users can save song metadata and a normal external link, and public profiles show a retro **Now Playing** widget.
+
+#### Database Fields
+
+The `profiles` table includes:
+
+- `profile_song_title`
+- `profile_song_artist`
+- `profile_song_url`
+
+`database/seed.sql` adds these columns with `ADD COLUMN IF NOT EXISTS` for existing local databases and seeds Keith with:
+
+- Song title: `Would?`
+- Artist: `Alice in Chains`
+- Song URL: `https://example.com/profile-song-placeholder`
+
+#### Editor Fields
+
+The profile editor has a **Profile Song** section with:
+
+- Song Title
+- Artist
+- Song URL
+
+These fields save through the existing **Save Profile** button and update the live preview immediately.
+
+#### Public Profile Display
+
+Public profiles render a chunky early-web profile song widget. If title or artist is present, it shows:
+
+```text
+Now Playing: Would? by Alice in Chains
+```
+
+If no song is set, it shows:
+
+```text
+No profile song set. Suspiciously quiet.
+```
+
+If a valid URL exists, the page shows a normal `Open song link` anchor. There are no uploads, no autoplay, no embedded player, and no `dangerouslySetInnerHTML`.
+
+#### URL Validation
+
+`PUT /api/profile/me` accepts:
+
+- `profileSongTitle`, max 120 characters
+- `profileSongArtist`, max 120 characters
+- `profileSongUrl`, max 500 characters
+
+`profileSongUrl` may be empty. If present, it must be a valid `http://` or `https://` URL. Unsupported schemes such as `javascript:`, `data:`, and `file:` are rejected with `400`.
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Log in as Keith with `keith` / `password123`.
+5. Visit `/profile/edit`.
+6. Confirm the **Profile Song** section appears.
+7. Set Song Title to `Would?`, Artist to `Alice in Chains`, and Song URL to `https://example.com/profile-song-placeholder`.
+8. Click **Save Profile**.
+9. Confirm `Profile saved. Your chaos has been preserved.`
+10. Visit `/profile/keith`.
+11. Confirm the profile song box appears with title and artist.
+12. Confirm the song URL renders as a normal link.
+13. Refresh `/profile/keith` and confirm the song persists.
+14. Try `javascript:alert(1)` as the song URL and confirm the backend rejects it with `400`.
+15. Confirm `npm run build` passes in `client/`.
+16. Smoke check comments, bulletins, browse, friends, Top 8, profile editor, theme controls, avatar upload, and background upload.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

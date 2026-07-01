@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   theme_background_repeat VARCHAR(20) NOT NULL DEFAULT 'repeat',
   theme_background_size VARCHAR(20) NOT NULL DEFAULT 'auto',
   theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center',
+  profile_song_title VARCHAR(120),
+  profile_song_artist VARCHAR(120),
+  profile_song_url VARCHAR(500),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

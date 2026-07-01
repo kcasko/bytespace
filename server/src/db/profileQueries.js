@@ -35,6 +35,9 @@ function mapProfileRow(row) {
     online: true,
     profileImageUrl: row.profile_image_url || '',
     backgroundImageUrl: row.background_image_url || '',
+    profileSongTitle: row.profile_song_title || '',
+    profileSongArtist: row.profile_song_artist || '',
+    profileSongUrl: row.profile_song_url || '',
     profileTitle: `${row.display_name || row.username}'s ByteSpace`,
     aboutMe: row.about_me || '',
     whoIdLikeToMeet: row.who_id_like_to_meet || '',
@@ -71,6 +74,9 @@ function mapEditableProfileRow(row) {
     games: row.games || '',
     profileImageUrl: row.profile_image_url || '',
     backgroundImageUrl: row.background_image_url || '',
+    profileSongTitle: row.profile_song_title || '',
+    profileSongArtist: row.profile_song_artist || '',
+    profileSongUrl: row.profile_song_url || '',
     themeBackgroundColor: row.theme_background_color || '#1a0f6d',
     themeTextColor: row.theme_text_color || '#111111',
     themeBoxColor: row.theme_box_color || '#f5fbff',
@@ -98,6 +104,9 @@ export async function getOwnProfileByUserId(userId) {
         games,
         profile_image_url,
         background_image_url,
+        profile_song_title,
+        profile_song_artist,
+        profile_song_url,
         theme_background_color,
         theme_text_color,
         theme_box_color,
@@ -143,6 +152,9 @@ export async function updateOwnProfile(userId, profileInput) {
         theme_background_repeat = $17,
         theme_background_size = $18,
         theme_background_position = $19,
+        profile_song_title = $20,
+        profile_song_artist = $21,
+        profile_song_url = $22,
         updated_at = NOW()
       WHERE user_id = $1
       RETURNING
@@ -155,6 +167,9 @@ export async function updateOwnProfile(userId, profileInput) {
         music,
         movies,
         games,
+        profile_song_title,
+        profile_song_artist,
+        profile_song_url,
         theme_background_color,
         theme_text_color,
         theme_box_color,
@@ -184,7 +199,10 @@ export async function updateOwnProfile(userId, profileInput) {
       profileInput.themeFontFamily,
       profileInput.themeBackgroundRepeat,
       profileInput.themeBackgroundSize,
-      profileInput.themeBackgroundPosition
+      profileInput.themeBackgroundPosition,
+      profileInput.profileSongTitle,
+      profileInput.profileSongArtist,
+      profileInput.profileSongUrl
     ]
   );
 
@@ -212,6 +230,9 @@ export async function getProfileByUsername(username) {
         profiles.games,
         profiles.profile_image_url,
         profiles.background_image_url,
+        profiles.profile_song_title,
+        profiles.profile_song_artist,
+        profiles.profile_song_url,
         profiles.theme_background_color,
         profiles.theme_text_color,
         profiles.theme_box_color,

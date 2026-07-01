@@ -14,6 +14,17 @@ function toAssetUrl(url) {
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 }
 
+function isHttpUrl(url) {
+  if (!url) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function Box({ title, children, className = '' }) {
   return (
     <section className={`retro-box ${className}`}>
@@ -106,6 +117,33 @@ function TopFriends({ friends }) {
           })}
         </div>
       )}
+    </Box>
+  );
+}
+
+function ProfileSong({ profile }) {
+  const hasSong = profile.profileSongTitle || profile.profileSongArtist;
+  const songText = hasSong
+    ? `${profile.profileSongTitle || 'Untitled'} by ${profile.profileSongArtist || 'Unknown Artist'}`
+    : 'No profile song set. Suspiciously quiet.';
+
+  return (
+    <Box title={`${profile.displayName}'s Profile Song`} className="profile-song-box">
+      <div className="now-playing-widget">
+        <div className="equalizer-bars" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+        <div>
+          <strong>Now Playing:</strong>
+          <p>{songText}</p>
+          {isHttpUrl(profile.profileSongUrl) && (
+            <a href={profile.profileSongUrl} target="_blank" rel="noreferrer">Open song link</a>
+          )}
+        </div>
+      </div>
     </Box>
   );
 }
@@ -333,6 +371,7 @@ export default function ProfilePage({ currentUser }) {
             <p>{profile.whoIdLikeToMeet}</p>
           </Box>
 
+          <ProfileSong profile={profile} />
           <TopFriends friends={profile.topFriends} />
           <Comments
             comments={comments}

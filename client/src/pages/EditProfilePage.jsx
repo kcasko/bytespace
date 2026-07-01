@@ -9,6 +9,17 @@ function toAssetUrl(url) {
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
 }
 
+function isHttpUrl(url) {
+  if (!url) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 const fontOptions = [
   'Arial',
   'Verdana',
@@ -30,6 +41,9 @@ const emptyProfile = {
   music: '',
   movies: '',
   games: '',
+  profileSongTitle: '',
+  profileSongArtist: '',
+  profileSongUrl: '',
   themeBackgroundColor: '#1a0f6d',
   themeTextColor: '#111111',
   themeBoxColor: '#f5fbff',
@@ -409,6 +423,14 @@ export default function EditProfilePage({ currentUser }) {
             <TextInput label="Games" name="games" value={profile.games} onChange={updateField} multiline />
           </fieldset>
 
+          <fieldset>
+            <legend>Profile Song</legend>
+            <p className="editor-helper">Paste a normal http/https link only. No uploads yet, because copyright lawyers are allergic to fun.</p>
+            <TextInput label="Song Title" name="profileSongTitle" value={profile.profileSongTitle} onChange={updateField} />
+            <TextInput label="Artist" name="profileSongArtist" value={profile.profileSongArtist} onChange={updateField} />
+            <TextInput label="Song URL" name="profileSongUrl" value={profile.profileSongUrl} onChange={updateField} />
+          </fieldset>
+
           {/* Save button inside the form so Enter key and explicit click both work */}
           <button type="submit" className="save-profile-button" disabled={status === 'saving'}>
             {status === 'saving' ? 'Saving…' : 'Save Profile'}
@@ -506,6 +528,17 @@ export default function EditProfilePage({ currentUser }) {
             <div className="profile-preview-box" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               <strong>{profile.headline || 'Your headline goes here.'}</strong>
               <p>{profile.aboutMe || 'About Me preview text will show up here as you type.'}</p>
+            </div>
+            <div className="profile-preview-box profile-song-preview" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
+              <strong>Now Playing</strong>
+              <p>
+                {profile.profileSongTitle || profile.profileSongArtist
+                  ? `${profile.profileSongTitle || 'Untitled'} by ${profile.profileSongArtist || 'Unknown Artist'}`
+                  : 'No profile song set. Suspiciously quiet.'}
+              </p>
+              {isHttpUrl(profile.profileSongUrl) && (
+                <a href={profile.profileSongUrl} target="_blank" rel="noreferrer">Open song link</a>
+              )}
             </div>
             <div className="profile-preview-box" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               <strong>Top 8 Preview</strong>

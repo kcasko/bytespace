@@ -12,7 +12,10 @@ WHERE username = CONCAT('pe', 'ggy')
 ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS theme_background_repeat VARCHAR(20) NOT NULL DEFAULT 'repeat',
   ADD COLUMN IF NOT EXISTS theme_background_size VARCHAR(20) NOT NULL DEFAULT 'auto',
-  ADD COLUMN IF NOT EXISTS theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center';
+  ADD COLUMN IF NOT EXISTS theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center',
+  ADD COLUMN IF NOT EXISTS profile_song_title VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS profile_song_artist VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS profile_song_url VARCHAR(500);
 
 UPDATE profiles
 SET theme_background_repeat = COALESCE(NULLIF(theme_background_repeat, ''), 'repeat'),
@@ -56,7 +59,10 @@ INSERT INTO profiles (
   theme_font_family,
   theme_background_repeat,
   theme_background_size,
-  theme_background_position
+  theme_background_position,
+  profile_song_title,
+  profile_song_artist,
+  profile_song_url
 )
 SELECT
   users.id,
@@ -79,7 +85,10 @@ SELECT
   'Arial, Helvetica, sans-serif',
   'repeat',
   'auto',
-  'center'
+  'center',
+  'Would?',
+  'Alice in Chains',
+  'https://example.com/profile-song-placeholder'
 FROM users
 WHERE users.username = 'keith'
 ON CONFLICT (user_id) DO UPDATE SET
@@ -103,6 +112,9 @@ ON CONFLICT (user_id) DO UPDATE SET
   theme_background_repeat = EXCLUDED.theme_background_repeat,
   theme_background_size = EXCLUDED.theme_background_size,
   theme_background_position = EXCLUDED.theme_background_position,
+  profile_song_title = EXCLUDED.profile_song_title,
+  profile_song_artist = EXCLUDED.profile_song_artist,
+  profile_song_url = EXCLUDED.profile_song_url,
   updated_at = NOW();
 
 INSERT INTO profiles (user_id, display_name)
