@@ -585,7 +585,7 @@ button {
   font-weight: 900;
 }
 
-.editor-panel input,
+.editor-panel input:not([type="color"]):not([type="file"]),
 .editor-panel textarea,
 .editor-panel select {
   width: 100%;
@@ -599,6 +599,10 @@ button {
 .editor-panel textarea {
   min-height: 86px;
   resize: vertical;
+}
+
+.editor-aside-fields {
+  padding: 10px 10px 0;
 }
 
 .color-row {
@@ -652,6 +656,88 @@ button {
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;
+}
+
+/* ── Image upload widget ───────────────────────────────────────────────── */
+
+.upload-section {
+  margin: 10px;
+  padding: 10px;
+  border: 3px ridge #00c5ff;
+  background: #f5fbff;
+}
+
+.upload-section__legend {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 7px;
+  border: 2px outset #ff9de5;
+  background: #fff73b;
+  color: #00126f;
+  font-weight: 900;
+}
+
+.upload-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 110px;
+  object-fit: cover;
+  margin-bottom: 8px;
+  border: 3px ridge #ff00a8;
+}
+
+/* Hide the native file input visually but keep it accessible */
+.upload-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Styled proxy label that triggers the hidden file input */
+.upload-file-label {
+  display: block;
+  margin-bottom: 6px;
+  padding: 6px 9px;
+  border: 3px inset #9bdfff;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.upload-file-label:hover {
+  background: #e8f7ff;
+}
+
+.upload-button {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: 3px outset #ff9de5;
+  background: linear-gradient(#fff73b, #ff9de5);
+  color: #00126f;
+  font: inherit;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.upload-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.upload-error {
+  margin-top: 8px;
+  padding: 8px;
+  border: 3px dashed #8b0000;
+  background: #ffb7ed;
+  color: #540000;
+  font-weight: 900;
 }
 
 @keyframes blink {

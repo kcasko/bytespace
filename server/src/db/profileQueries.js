@@ -8,7 +8,8 @@ export const allowedProfileFonts = [
   'Georgia',
   'Times New Roman',
   'Courier New',
-  'Comic Sans MS'
+  'Comic Sans MS',
+  'Arial, Helvetica, sans-serif'
 ];
 
 function formatProfileDate(value) {

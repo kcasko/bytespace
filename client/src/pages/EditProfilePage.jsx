@@ -59,44 +59,37 @@ function ThemeColor({ label, name, value, onChange }) {
 }
 
 /**
- * ImageUploader — standalone upload section for avatar or background.
- * Does NOT submit with the main profile form.
+ * ImageUploader — completely standalone upload widget.
+ * Must NOT be placed inside the profile save <form>.
+ * Uses its own state, its own button (type="button"), and its own fetch call.
  */
 function ImageUploader({ label, fieldName, onUpload, currentUrl }) {
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(currentUrl || '');
+  const [preview, setPreview] = useState('');
   const [uploadStatus, setUploadStatus] = useState('idle'); // idle | uploading | success | error
   const [uploadMessage, setUploadMessage] = useState('');
   const inputRef = useRef(null);
 
-  // Keep preview in sync when the parent provides a currentUrl (initial load)
+  // Sync preview when parent provides initial URL after profile loads
   useEffect(() => {
-    if (currentUrl && !file) {
+    if (currentUrl) {
       setPreview(currentUrl.startsWith('http') ? currentUrl : `${API_BASE_URL}${currentUrl}`);
     }
-  }, [currentUrl, file]);
+  }, [currentUrl]);
 
   function handleFileChange(event) {
     const selected = event.target.files[0];
-
-    if (!selected) {
-      return;
-    }
+    if (!selected) return;
 
     setFile(selected);
     setUploadMessage('');
     setUploadStatus('idle');
 
-    // Show local preview immediately
-    const objectUrl = URL.createObjectURL(selected);
-    setPreview(objectUrl);
+    // Show local blob preview immediately so the user can see what they picked
+    setPreview(URL.createObjectURL(selected));
   }
 
-  async function handleUpload(event) {
-    // Prevent any accidental form submission propagation
-    event.preventDefault();
-    event.stopPropagation();
-
+  async function handleUpload() {
     if (!file) {
       setUploadMessage('Please select an image file first.');
       setUploadStatus('error');
@@ -111,53 +104,58 @@ function ImageUploader({ label, fieldName, onUpload, currentUrl }) {
       setUploadStatus('success');
       setUploadMessage('Image uploaded successfully!');
       setFile(null);
-      // Update preview to the persisted URL from the server
+      // Switch preview to the persisted server URL
       setPreview(`${API_BASE_URL}${publicUrl}`);
-
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
+      if (inputRef.current) inputRef.current.value = '';
     } catch (err) {
       setUploadStatus('error');
       setUploadMessage(err.message || 'Upload failed.');
     }
   }
 
+  const buttonLabel = fieldName === 'avatar' ? 'Upload Profile Picture' : 'Upload Background Image';
+
   return (
-    <fieldset>
-      <legend>{label}</legend>
+    <div className="upload-section">
+      <div className="upload-section__legend">{label}</div>
+
       {preview && (
         <img
           src={preview}
           alt={`${label} preview`}
-          style={{ maxWidth: '100%', maxHeight: '120px', objectFit: 'cover', display: 'block', marginBottom: '0.5rem' }}
+          className="upload-preview"
         />
       )}
-      <label>
-        Choose file
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          onChange={handleFileChange}
-          name={fieldName}
-        />
+
+      {/* Native file input — NOT inside a <label> so browser styling is applied cleanly */}
+      <input
+        ref={inputRef}
+        id={`file-input-${fieldName}`}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        onChange={handleFileChange}
+        className="upload-file-input"
+      />
+      <label htmlFor={`file-input-${fieldName}`} className="upload-file-label">
+        {file ? file.name : 'Choose file…'}
       </label>
+
       <button
         type="button"
+        className="upload-button"
         onClick={handleUpload}
         disabled={uploadStatus === 'uploading' || !file}
-        style={{ marginTop: '0.4rem' }}
       >
-        {uploadStatus === 'uploading' ? 'Uploading...' : `Upload ${label}`}
+        {uploadStatus === 'uploading' ? 'Uploading…' : buttonLabel}
       </button>
+
       {uploadStatus === 'success' && (
         <div className="editor-success">{uploadMessage}</div>
       )}
       {uploadStatus === 'error' && (
-        <div className="auth-error">{uploadMessage}</div>
+        <div className="upload-error">{uploadMessage}</div>
       )}
-    </fieldset>
+    </div>
   );
 }
 
@@ -167,7 +165,8 @@ export default function EditProfilePage({ currentUser }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Track current image URLs so ImageUploader can show an initial preview
+  // Separate state for image URLs so they survive profile saves without getting blanked.
+  // The updateOwnProfile RETURNING clause does not include image URL columns.
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState('');
   const [currentBackgroundUrl, setCurrentBackgroundUrl] = useState('');
 
@@ -198,10 +197,7 @@ export default function EditProfilePage({ currentUser }) {
     }
 
     loadProfile();
-
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, [currentUser]);
 
   function updateField(event) {
@@ -221,7 +217,8 @@ export default function EditProfilePage({ currentUser }) {
 
     try {
       const updatedProfile = await updateMyProfile(profile);
-      setProfile({ ...emptyProfile, ...updatedProfile });
+      // Preserve image URLs — the PUT response does not include them
+      setProfile((current) => ({ ...emptyProfile, ...updatedProfile, profileImageUrl: current.profileImageUrl, backgroundImageUrl: current.backgroundImageUrl }));
       setStatus('ready');
       setMessage('Profile saved. Your chaos has been preserved.');
     } catch (err) {
@@ -254,9 +251,18 @@ export default function EditProfilePage({ currentUser }) {
 
   return (
     <main className="page-shell editor-shell">
-      <form className="editor-layout" onSubmit={saveProfile}>
-        <section className="editor-panel">
+      {/*
+        The grid wrapper is a plain <div>, NOT the <form>.
+        The <form> only wraps text + theme fields so that:
+          a) ImageUploaders are fully outside the form (no accidental submission, no input clearing)
+          b) Pressing Enter in a text field saves the profile, not the images
+      */}
+      <div className="editor-layout">
+
+        {/* ── Left panel: text fields + save button ───────────────────────── */}
+        <form id="profile-form" className="editor-panel" onSubmit={saveProfile}>
           <h1>Profile Control Panel</h1>
+
           {message && <div className="editor-success">{message}</div>}
           {error && <div className="auth-error">{error}</div>}
 
@@ -286,23 +292,32 @@ export default function EditProfilePage({ currentUser }) {
             <TextInput label="Movies" name="movies" value={profile.movies} onChange={updateField} multiline />
             <TextInput label="Games" name="games" value={profile.games} onChange={updateField} multiline />
           </fieldset>
-        </section>
 
+          {/* Save button inside the form so Enter key and explicit click both work */}
+          <button type="submit" className="save-profile-button" disabled={status === 'saving'}>
+            {status === 'saving' ? 'Saving…' : 'Save Profile'}
+          </button>
+        </form>
+
+        {/* ── Right panel: theme + image uploads (outside the form) ──────── */}
         <aside className="editor-panel">
           <h2>Profile Theme</h2>
-          <ThemeColor label="Background" name="themeBackgroundColor" value={profile.themeBackgroundColor} onChange={updateField} />
-          <ThemeColor label="Text" name="themeTextColor" value={profile.themeTextColor} onChange={updateField} />
-          <ThemeColor label="Box" name="themeBoxColor" value={profile.themeBoxColor} onChange={updateField} />
-          <ThemeColor label="Border" name="themeBorderColor" value={profile.themeBorderColor} onChange={updateField} />
-          <ThemeColor label="Header" name="themeHeaderColor" value={profile.themeHeaderColor} onChange={updateField} />
-          <label>
-            Font
-            <select name="themeFontFamily" value={profile.themeFontFamily} onChange={updateField}>
-              {fontOptions.map((font) => (
-                <option key={font} value={font}>{font}</option>
-              ))}
-            </select>
-          </label>
+
+          <div className="editor-aside-fields">
+            <ThemeColor label="Background" name="themeBackgroundColor" value={profile.themeBackgroundColor} onChange={updateField} />
+            <ThemeColor label="Text" name="themeTextColor" value={profile.themeTextColor} onChange={updateField} />
+            <ThemeColor label="Box" name="themeBoxColor" value={profile.themeBoxColor} onChange={updateField} />
+            <ThemeColor label="Border" name="themeBorderColor" value={profile.themeBorderColor} onChange={updateField} />
+            <ThemeColor label="Header" name="themeHeaderColor" value={profile.themeHeaderColor} onChange={updateField} />
+            <label>
+              Font
+              <select name="themeFontFamily" value={profile.themeFontFamily} onChange={updateField}>
+                {fontOptions.map((font) => (
+                  <option key={font} value={font}>{font}</option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <div
             className="profile-preview-panel"
@@ -321,26 +336,47 @@ export default function EditProfilePage({ currentUser }) {
             </div>
           </div>
 
-          <button type="submit" className="save-profile-button" disabled={status === 'saving'}>
-            {status === 'saving' ? 'Saving...' : 'Save Profile'}
+          {/*
+            This save button submits the profile-form above via the HTML `form` attribute.
+            It is outside the <form> element but still wired to it.
+            This way users who focus on the theme panel see a save button here too.
+          */}
+          <button
+            type="submit"
+            form="profile-form"
+            className="save-profile-button"
+            disabled={status === 'saving'}
+          >
+            {status === 'saving' ? 'Saving…' : 'Save Profile'}
           </button>
           <Link className="view-profile-link" to={`/profile/${currentUser.username}`}>View your profile</Link>
 
-          {/* Image upload sections — separate from the main profile save form */}
+          {/* Image uploaders — completely outside the <form> */}
           <ImageUploader
             label="Profile Picture"
             fieldName="avatar"
             currentUrl={currentAvatarUrl}
-            onUpload={uploadAvatar}
+            onUpload={async (file) => {
+              const url = await uploadAvatar(file);
+              setProfile((current) => ({ ...current, profileImageUrl: url }));
+              setCurrentAvatarUrl(url);
+              return url;
+            }}
           />
           <ImageUploader
             label="Background Image"
             fieldName="background"
             currentUrl={currentBackgroundUrl}
-            onUpload={uploadBackground}
+            onUpload={async (file) => {
+              const url = await uploadBackground(file);
+              setProfile((current) => ({ ...current, backgroundImageUrl: url }));
+              setCurrentBackgroundUrl(url);
+              return url;
+            }}
           />
         </aside>
-      </form>
+
+      </div>
     </main>
   );
 }
