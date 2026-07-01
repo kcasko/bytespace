@@ -508,6 +508,79 @@ Keith's seeded Top 8 uses those friends in positions 1 through 8. `database/seed
 21. Try a duplicate friend request and confirm a useful error/status appears.
 22. Confirm `npm run build` passes in `client/`.
 
+### v1.1 Browse and User Search
+
+ByteSpace v1.1 adds a public browse/search page so people can discover profiles without guessing usernames.
+
+#### Browse Page
+
+Open:
+
+```text
+http://localhost:5173/browse
+```
+
+The page shows recent users by default. Searching checks both `username` and profile `display_name`, then renders public-safe profile cards with avatar, display name, username, headline, mood, and a link to the public profile.
+
+Logged-out users can browse and view profiles, but friend actions are replaced with `Log in to add friends.`
+
+Logged-in users see friend-aware actions/statuses:
+
+- `self` → Your profile
+- `friend` → Friends
+- `outgoing_pending` → Request sent
+- `incoming_pending` → Request received
+- `none` → Add Friend
+
+Clicking **Add Friend** sends `POST /api/friends/request/:username` and updates that card to `Request sent` without a full page reload.
+
+#### User Search Route
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/users/search?q=` | Public user browse/search endpoint |
+
+Behavior:
+
+- Empty `q` returns a default recent-user browse list.
+- Non-empty `q` searches username and display name.
+- Results are limited to 25.
+- Exact username matches are ordered first when practical.
+- Logged-out responses omit `friendStatus`.
+- Logged-in responses include `friendStatus` relative to the current user.
+- Responses never include `email`, `password_hash`, session data, or private/internal fields.
+
+Example:
+
+```bash
+curl "http://localhost:5000/api/users/search?q=keith"
+```
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Visit `http://localhost:5173/browse` while logged out.
+5. Confirm recent/default users appear.
+6. Search for `keith`.
+7. Confirm Keith appears.
+8. Confirm logged-out users can view `/profile/keith`.
+9. Confirm logged-out users do not get an active **Add Friend** action.
+10. Log in as Keith.
+11. Visit `/browse`.
+12. Confirm default users appear.
+13. Search for `lacutis`.
+14. Confirm Lacutis appears with `Friends` status.
+15. Search for `keith`.
+16. Confirm self status appears.
+17. Register or use a test user that is not Keith's friend.
+18. Search for that user.
+19. Click **Add Friend**.
+20. Confirm the card updates to `Request sent`.
+21. Confirm the request appears on `/friends`.
+22. Confirm `npm run build` passes in `client/`.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

@@ -8,6 +8,7 @@ import commentRoutes from './routes/commentRoutes.js';
 import dbRoutes from './routes/dbRoutes.js';
 import friendRoutes from './routes/friendRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import { sessionMiddleware } from './middleware/sessionMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,6 +39,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/db', dbRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/users', userRoutes);
 
 app.listen(port, () => {
   console.log(`ByteSpace API listening on http://localhost:${port}`);

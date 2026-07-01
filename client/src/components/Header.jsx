@@ -7,8 +7,7 @@ export default function Header({ currentUser, onLogout }) {
         <Link className="logo" to="/">ByteSpace</Link>
         <nav className="main-nav" aria-label="Primary navigation">
           <Link to="/">Home</Link>
-          <a href="/browse">Browse</a>
-          <a href="/search">Search</a>
+          <Link to="/browse">Browse</Link>
           {currentUser ? (
             <>
               <Link to="/friends">Friends</Link>
