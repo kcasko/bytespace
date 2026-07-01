@@ -191,6 +191,8 @@ SELECT users.id, bulletin_data.title, bulletin_data.body, bulletin_data.created_
 FROM users
 JOIN (
   VALUES
+    ('ByteSpace is alive', 'If this page loads, the retro internet has escaped containment.', '2006-07-01 20:00:00-04'),
+    ('Top 8 politics', 'Friendship rankings are back. Choose wisely.', '2006-07-01 19:30:00-04'),
     ('new playlist just dropped', 'Bring headphones and an unreasonable opinion.', '2006-06-30 19:00:00-04'),
     ('does anyone still use forums?', 'Serious question. I miss signatures and bad avatars.', '2006-06-29 19:00:00-04'),
     ('rate my terminal colors', 'The contrast is terrible and that is part of the art.', '2006-06-27 19:00:00-04')
@@ -202,3 +204,19 @@ WHERE users.username = 'keith'
     WHERE existing.user_id = users.id
       AND existing.title = bulletin_data.title
   );
+
+INSERT INTO bulletins (user_id, title, body, created_at, updated_at)
+SELECT users.id, friend_bulletin_data.title, friend_bulletin_data.body, friend_bulletin_data.created_at::timestamptz, friend_bulletin_data.created_at::timestamptz
+FROM users
+JOIN (
+  VALUES
+    ('tom', 'Thanks for the add economy', 'I remain everyone''s first friend. This is infrastructure.', '2006-07-01 18:00:00-04'),
+    ('lacutis', 'Profile review office hours', 'Post your worst layout and I will judge it with unreasonable confidence.', '2006-07-01 17:30:00-04'),
+    ('bytegeist', 'ghost in the guestbook', 'If you see this bulletin twice, blame caching.', '2006-07-01 17:00:00-04')
+) AS friend_bulletin_data(username, title, body, created_at) ON friend_bulletin_data.username = users.username
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM bulletins existing
+  WHERE existing.user_id = users.id
+    AND existing.title = friend_bulletin_data.title
+);

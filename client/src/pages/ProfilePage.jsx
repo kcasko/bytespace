@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { getUserBulletins } from '../api/bulletinApi.js';
 import { getComments, postComment } from '../api/commentApi.js';
 import { getProfile } from '../api/profileApi.js';
 
@@ -204,15 +205,22 @@ function Comments({ comments, currentUser, profileUsername, onCommentPosted }) {
 
 function Bulletins({ bulletins }) {
   return (
-    <Box title="Bulletins Preview">
-      <ul className="bulletins-list">
-        {bulletins.map((bulletin) => (
-          <li key={bulletin.title}>
-            <a href="/bulletins">{bulletin.title}</a>
-            <span>{bulletin.date}</span>
-          </li>
-        ))}
-      </ul>
+    <Box title="Bulletin Board">
+      {bulletins.length === 0 ? (
+        <div className="friend-empty-note">No bulletins yet. The glitter void remains silent.</div>
+      ) : (
+        <div className="profile-bulletins-list">
+          {bulletins.slice(0, 5).map((bulletin) => (
+            <article className="profile-bulletin" key={bulletin.id}>
+              <header>
+                <strong>{bulletin.title}</strong>
+                <span>{formatCommentDate(bulletin.createdAt)}</span>
+              </header>
+              <p>{bulletin.body}</p>
+            </article>
+          ))}
+        </div>
+      )}
     </Box>
   );
 }
@@ -221,6 +229,7 @@ export default function ProfilePage({ currentUser }) {
   const { username = 'keith' } = useParams();
   const [profile, setProfile] = useState(null);
   const [comments, setComments] = useState([]);
+  const [bulletins, setBulletins] = useState([]);
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
@@ -240,6 +249,12 @@ export default function ProfilePage({ currentUser }) {
 
         if (!ignore) {
           setComments(commentsData);
+        }
+
+        const bulletinData = await getUserBulletins(username);
+
+        if (!ignore) {
+          setBulletins(bulletinData);
         }
       } catch {
         if (!ignore) {
@@ -325,7 +340,7 @@ export default function ProfilePage({ currentUser }) {
             profileUsername={profile.username}
             onCommentPosted={(comment) => setComments((current) => [comment, ...current])}
           />
-          <Bulletins bulletins={profile.bulletins} />
+          <Bulletins bulletins={bulletins} />
         </section>
       </div>
     </main>

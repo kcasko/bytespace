@@ -729,6 +729,151 @@ button {
   align-self: end;
 }
 
+.bulletins-shell {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 0, 168, 0.14) 0 10px, rgba(255, 247, 59, 0.16) 10px 20px),
+    rgba(255, 255, 255, 0.92);
+}
+
+.bulletins-panel {
+  border: 4px double #003d9c;
+  background: #fffdea;
+}
+
+.bulletins-panel h1,
+.bulletins-section h2 {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 4px solid #003d9c;
+  background: linear-gradient(90deg, #003d9c, #ff00a8, #fff73b);
+  color: #fff;
+  text-shadow: 2px 2px 0 #00126f;
+}
+
+.bulletins-panel h1 {
+  font-size: 26px;
+}
+
+.bulletins-section {
+  margin: 10px;
+  border: 3px ridge #00c5ff;
+  background: #f5fbff;
+}
+
+.bulletins-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.bulletin-form {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.bulletin-form label {
+  display: grid;
+  gap: 4px;
+  color: #00126f;
+  font-weight: 900;
+}
+
+.bulletin-form input,
+.bulletin-form textarea {
+  width: 100%;
+  padding: 7px;
+  border: 3px inset #9bdfff;
+  background: #fff;
+  color: #111;
+  font: inherit;
+}
+
+.bulletin-form textarea {
+  min-height: 115px;
+  resize: vertical;
+}
+
+.bulletin-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bulletin-form__footer span {
+  color: #6e006e;
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+}
+
+.bulletin-form button,
+.bulletin-card__actions button {
+  min-height: 34px;
+  border: 3px outset #ff9de5;
+  background: linear-gradient(#fff73b, #ff9de5);
+  color: #00126f;
+  font: inherit;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.bulletin-card,
+.profile-bulletin {
+  margin: 10px;
+  border: 3px solid #003d9c;
+  background: #fff;
+}
+
+.bulletin-card header,
+.profile-bulletin header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px;
+  border-bottom: 2px dotted #003d9c;
+  background: #fff73b;
+  color: #00126f;
+}
+
+.bulletin-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.bulletin-card header span,
+.profile-bulletin header span,
+.bulletin-card__author span {
+  color: #6e006e;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.bulletin-card p,
+.profile-bulletin p {
+  margin: 0;
+  padding: 9px;
+  white-space: pre-wrap;
+}
+
+.bulletin-card__author {
+  padding: 7px;
+  border-bottom: 1px dotted #003d9c;
+  background: #e8f7ff;
+  font-weight: 900;
+}
+
+.bulletin-card__actions {
+  padding: 0 9px 9px;
+}
+
+.profile-bulletins-list {
+  display: grid;
+  gap: 0;
+}
+
 .comment-login-prompt,
 .comment-success,
 .comment-error {

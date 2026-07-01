@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { getMe, logout } from './api/authApi.js';
 import Header from './components/Header.jsx';
 import BrowsePage from './pages/BrowsePage.jsx';
+import BulletinsPage from './pages/BulletinsPage.jsx';
 import EditProfilePage from './pages/EditProfilePage.jsx';
 import FriendsPage from './pages/FriendsPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
@@ -47,6 +48,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/profile/keith" replace />} />
         <Route path="/browse" element={<BrowsePage currentUser={currentUser} />} />
+        <Route path="/bulletins" element={<BulletinsPage currentUser={currentUser} />} />
         <Route path="/friends" element={<FriendsPage currentUser={currentUser} />} />
         <Route path="/profile/edit" element={<EditProfilePage currentUser={currentUser} />} />
         <Route path="/profile/:username" element={<ProfilePage currentUser={currentUser} />} />

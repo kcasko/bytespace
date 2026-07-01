@@ -581,6 +581,110 @@ curl "http://localhost:5000/api/users/search?q=keith"
 21. Confirm the request appears on `/friends`.
 22. Confirm `npm run build` passes in `client/`.
 
+### v1.2 Bulletins
+
+ByteSpace v1.2 adds classic public bulletins: short posts that users create from their account, display on their public profile, and review from a logged-in bulletin board page.
+
+#### Bulletin Routes
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/bulletins/user/:username` | Public | Return public bulletins for a profile username |
+| `GET` | `/api/bulletins/me` | Required | Return the logged-in user's bulletins |
+| `GET` | `/api/bulletins/friends` | Required | Return recent bulletins from accepted friends |
+| `POST` | `/api/bulletins` | Required | Create a bulletin |
+| `DELETE` | `/api/bulletins/:id` | Required | Delete one of the logged-in user's own bulletins |
+
+Bulletin responses include:
+
+- `id`
+- `title`
+- `body`
+- `createdAt`
+- `updatedAt`
+- `authorUsername`
+- `authorDisplayName`
+- `authorProfileImageUrl`
+
+Responses never include email, password hashes, or session data.
+
+#### Validation
+
+`POST /api/bulletins` accepts:
+
+```json
+{
+  "title": "Subject here",
+  "body": "Bulletin body here"
+}
+```
+
+Rules:
+
+- Title is required.
+- Body is required.
+- Title and body are trimmed before storage.
+- Title max length is 120 characters.
+- Body max length is 2000 characters.
+- Empty title/body are rejected.
+- Bulletins are public for now.
+- Only the owner can delete their bulletin.
+
+Bulletin title/body render as plain text in React. Do not use `dangerouslySetInnerHTML`.
+
+#### Frontend
+
+Open:
+
+```text
+http://localhost:5173/bulletins
+```
+
+Logged-out users see:
+
+```text
+Log in to post bulletins and scream into the glitter void.
+```
+
+Logged-in users can:
+
+- Post a bulletin.
+- View their own bulletins.
+- Delete their own bulletins.
+- View recent friend bulletins.
+
+Public profiles fetch recent bulletins through `/api/bulletins/user/:username` and show them in the **Bulletin Board** section.
+
+#### Seeded Bulletins
+
+`database/seed.sql` seeds a few Keith bulletins plus friend bulletins from Tom, Lacutis, and ByteGeist so `/profile/keith` and `/bulletins` have visible sample content.
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Visit `/profile/keith` logged out.
+5. Confirm the public bulletin section appears.
+6. Confirm logged-out users can read public bulletins.
+7. Visit `/bulletins` logged out.
+8. Confirm the login prompt appears.
+9. Log in as Keith with `keith` / `password123`.
+10. Visit `/bulletins`.
+11. Confirm the **Post a Bulletin** form appears.
+12. Create a bulletin.
+13. Confirm it appears under **Your Bulletins**.
+14. Visit `/profile/keith`.
+15. Confirm the new bulletin appears on the public profile.
+16. Refresh and confirm the bulletin persists.
+17. Try an empty title and confirm it is rejected.
+18. Try an empty body and confirm it is rejected.
+19. Try a too-long title/body and confirm it is rejected.
+20. Delete your own bulletin.
+21. Refresh and confirm deletion persists.
+22. Confirm friend bulletins display for Keith.
+23. Confirm `npm run build` passes in `client/`.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

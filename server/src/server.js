@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
+import bulletinRoutes from './routes/bulletinRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import dbRoutes from './routes/dbRoutes.js';
 import friendRoutes from './routes/friendRoutes.js';
@@ -35,6 +36,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', sessionMiddleware, authRoutes);
+app.use('/api/bulletins', bulletinRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/db', dbRoutes);
 app.use('/api/friends', friendRoutes);
