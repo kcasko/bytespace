@@ -1,0 +1,436 @@
+# ByteGeist Homelab Deployment Runbook
+
+Target: `https://bytespace.casko.dev`
+
+This runbook deploys ByteSpace on an Ubuntu VPS or ByteGeist homelab using PostgreSQL, Node.js, and Nginx Proxy Manager. It does not use Docker for the app. Express serves `client/dist`, `/api`, and `/uploads` in `NODE_ENV=production`.
+
+Do not commit `.env` files or real secrets. Replace every `REPLACE_WITH_*` value before starting the service.
+
+## 1. Server Prerequisites
+
+Install or confirm:
+
+- Ubuntu VPS or homelab host
+- Node.js LTS and npm
+- PostgreSQL
+- git
+- Nginx Proxy Manager reachable on the network
+- A DNS record for `bytespace.casko.dev` pointing at the proxy
+- Let's Encrypt certificate issued through Nginx Proxy Manager
+
+Example Ubuntu packages:
+
+```bash
+sudo apt update
+sudo apt install -y git postgresql postgresql-contrib
+node --version
+npm --version
+psql --version
+```
+
+Use Node.js 20 or newer. If Ubuntu's packaged Node is old, install Node LTS from NodeSource or your normal homelab package source.
+
+## 2. Suggested Directory
+
+Use:
+
+```bash
+/opt/bytespace
+```
+
+Clone the repository:
+
+```bash
+sudo git clone https://github.com/kcasko/bytespace.git /opt/bytespace
+sudo chown -R "$USER":"$USER" /opt/bytespace
+cd /opt/bytespace
+```
+
+## 3. Install Dependencies
+
+From the repo root:
+
+```bash
+cd /opt/bytespace
+npm install
+cd client
+npm install
+cd ../server
+npm install
+cd ..
+```
+
+The root scripts are convenience wrappers. The actual runtime dependencies live in `client/` and `server/`.
+
+## 4. PostgreSQL Setup
+
+Create the database and app user.
+
+```bash
+sudo -u postgres psql
+```
+
+Inside `psql`:
+
+```sql
+CREATE DATABASE bytespace;
+CREATE USER bytespace_user WITH PASSWORD 'REPLACE_WITH_STRONG_PASSWORD';
+GRANT ALL PRIVILEGES ON DATABASE bytespace TO bytespace_user;
+\c bytespace
+GRANT ALL ON SCHEMA public TO bytespace_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO bytespace_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO bytespace_user;
+\q
+```
+
+Load the schema from the repo root:
+
+```bash
+cd /opt/bytespace
+psql -d bytespace -f database/schema.sql
+```
+
+Optional demo seed:
+
+```bash
+psql -d bytespace -f database/seed.sql
+```
+
+`seed.sql` creates the Keith demo login with the documented development password. Do not keep that password on a public deployment. Change it, delete the seeded account, or create a fresh demo account before sharing the URL.
+
+If local peer authentication blocks `psql -d bytespace`, run the schema as postgres:
+
+```bash
+sudo -u postgres psql -d bytespace -f /opt/bytespace/database/schema.sql
+sudo -u postgres psql -d bytespace -f /opt/bytespace/database/seed.sql
+```
+
+## 5. Server Environment
+
+Create:
+
+```bash
+nano /opt/bytespace/server/.env
+```
+
+Template only:
+
+```env
+NODE_ENV=production
+PORT=5000
+CLIENT_ORIGIN=https://bytespace.casko.dev
+DATABASE_URL=postgres://bytespace_user:REPLACE_WITH_STRONG_PASSWORD@localhost:5432/bytespace
+SESSION_SECRET=REPLACE_WITH_LONG_RANDOM_SECRET
+TRUST_PROXY=1
+SESSION_COOKIE_SAMESITE=lax
+UPLOADS_DIR=uploads
+AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_MAX=10
+WRITE_RATE_LIMIT_WINDOW_MS=900000
+WRITE_RATE_LIMIT_MAX=60
+UPLOAD_RATE_LIMIT_WINDOW_MS=900000
+UPLOAD_RATE_LIMIT_MAX=30
+```
+
+Notes:
+
+- `SESSION_SECRET` should be at least 32 random characters.
+- Use HTTPS through Nginx Proxy Manager.
+- Same-origin frontend/backend at `bytespace.casko.dev` should work with `SESSION_COOKIE_SAMESITE=lax`.
+- If the frontend and backend are split across different domains later, cookie settings may need `SESSION_COOKIE_SAMESITE=none` plus HTTPS secure cookies.
+- `TRUST_PROXY=1` is required because production cookies sit behind the reverse proxy.
+
+Generate a session secret:
+
+```bash
+openssl rand -base64 48
+```
+
+## 6. Build Client
+
+From the repo root:
+
+```bash
+cd /opt/bytespace
+npm run build
+```
+
+This creates `client/dist`. In production mode, Express serves that directory and falls back to `index.html` for frontend routes.
+
+## 7. Start Production Manually
+
+From the repo root:
+
+```bash
+cd /opt/bytespace
+NODE_ENV=production npm start
+```
+
+The app should listen on port `5000`.
+
+Quick local checks on the server:
+
+```bash
+curl http://127.0.0.1:5000/api/health
+curl http://127.0.0.1:5000/api/db/health
+curl -I http://127.0.0.1:5000/
+```
+
+Stop the manual process before installing systemd.
+
+## 8. Process Manager With systemd
+
+### Simple Root Version
+
+This is the quickest version. It works, but a dedicated Linux user is cleaner.
+
+Create:
+
+```bash
+sudo nano /etc/systemd/system/bytespace.service
+```
+
+Service:
+
+```ini
+[Unit]
+Description=ByteSpace production server
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/bytespace
+EnvironmentFile=/opt/bytespace/server/.env
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable bytespace
+sudo systemctl start bytespace
+sudo systemctl status bytespace
+```
+
+Logs:
+
+```bash
+journalctl -u bytespace -f
+```
+
+### Better Dedicated User Version
+
+Create a service user:
+
+```bash
+sudo adduser --system --group --home /opt/bytespace bytespace
+sudo chown -R bytespace:bytespace /opt/bytespace
+```
+
+Use the same service file, but set:
+
+```ini
+User=bytespace
+Group=bytespace
+```
+
+Then reload and restart:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart bytespace
+```
+
+If npm is not at `/usr/bin/npm`, check:
+
+```bash
+which npm
+```
+
+Then update `ExecStart`.
+
+## 9. Nginx Proxy Manager
+
+Create a Proxy Host:
+
+- Domain Names: `bytespace.casko.dev`
+- Scheme: `http`
+- Forward Hostname / IP: server local IP or `127.0.0.1`
+- Forward Port: `5000`
+- Cache Assets: off unless you know what you are caching
+- Block Common Exploits: on
+- Websockets Support: off unless needed later
+
+SSL tab:
+
+- Request a new Let's Encrypt certificate
+- Force SSL: on
+- HTTP/2 Support: on if available
+- HSTS: optional after confirming HTTPS works
+
+The public app should be:
+
+```text
+https://bytespace.casko.dev
+```
+
+The public health checks should be:
+
+```text
+https://bytespace.casko.dev/api/health
+https://bytespace.casko.dev/api/db/health
+```
+
+## 10. Upload Persistence
+
+Default uploads live at:
+
+```text
+/opt/bytespace/server/uploads
+```
+
+Rules:
+
+- This directory must persist between deploys.
+- Back up `/opt/bytespace/server/uploads`.
+- Do not wipe uploads during deploys.
+- Do not commit uploaded files to git.
+- Future object storage is recommended if ByteSpace becomes public or multi-server.
+
+Create the directory if needed:
+
+```bash
+mkdir -p /opt/bytespace/server/uploads/avatars
+mkdir -p /opt/bytespace/server/uploads/backgrounds
+```
+
+## 11. Update And Deploy A New Version
+
+```bash
+cd /opt/bytespace
+git pull
+npm install
+cd client
+npm install
+cd ../server
+npm install
+cd ..
+npm run build
+sudo systemctl restart bytespace
+sudo systemctl status bytespace
+```
+
+Check logs if restart fails:
+
+```bash
+journalctl -u bytespace -n 100 --no-pager
+```
+
+## 12. Smoke Tests
+
+Server checks:
+
+```bash
+curl https://bytespace.casko.dev/api/health
+curl https://bytespace.casko.dev/api/db/health
+curl -I https://bytespace.casko.dev
+```
+
+Browser checks:
+
+1. Open `https://bytespace.casko.dev`.
+2. Confirm the landing page loads.
+3. Log in.
+4. Confirm the dashboard loads.
+5. Open `/profile/keith` or another profile.
+6. Upload avatar and background images.
+7. Post a guestbook comment.
+8. Create and delete a bulletin.
+9. Browse users.
+10. Manage friends and Top 8.
+11. Open settings.
+12. Test block and unblock.
+
+## 13. Backup Plan
+
+PostgreSQL:
+
+```bash
+pg_dump bytespace > bytespace-backup.sql
+```
+
+With a timestamp:
+
+```bash
+pg_dump bytespace > "bytespace-$(date +%Y%m%d-%H%M%S).sql"
+```
+
+Uploads:
+
+```bash
+tar -czf bytespace-uploads.tar.gz /opt/bytespace/server/uploads
+```
+
+With a timestamp:
+
+```bash
+tar -czf "bytespace-uploads-$(date +%Y%m%d-%H%M%S).tar.gz" /opt/bytespace/server/uploads
+```
+
+Store backups somewhere other than the same disk if this becomes important.
+
+## 14. Rollback Plan
+
+Use git tags.
+
+Example rollback to v2.1:
+
+```bash
+cd /opt/bytespace
+git fetch --tags
+git checkout v2.1
+npm install
+cd client
+npm install
+cd ../server
+npm install
+cd ..
+npm run build
+sudo systemctl restart bytespace
+```
+
+Confirm:
+
+```bash
+curl https://bytespace.casko.dev/api/health
+sudo systemctl status bytespace
+```
+
+To return to main later:
+
+```bash
+cd /opt/bytespace
+git checkout main
+git pull
+npm run build
+sudo systemctl restart bytespace
+```
+
+## 15. Final Pre-Public Checklist
+
+- Replace all `REPLACE_WITH_*` values.
+- Use a strong `SESSION_SECRET`.
+- Confirm HTTPS works.
+- Confirm Nginx Proxy Manager forwards to port `5000`.
+- Confirm `CLIENT_ORIGIN=https://bytespace.casko.dev`.
+- Confirm database health works.
+- Change or remove seeded demo credentials before public access.
+- Confirm uploads persist after `sudo systemctl restart bytespace`.
+- Confirm backups run.

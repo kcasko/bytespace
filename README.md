@@ -185,6 +185,7 @@ Auth responses return only safe user fields: `id`, `username`, and `email`. Pass
 Sessions are stored in PostgreSQL through `connect-pg-simple` using the `session` table in `database/schema.sql`.
 
 For deployment details, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+For the ByteGeist homelab runbook for `bytespace.casko.dev`, see [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md).
 
 ### v0.6 Profile Editor Verification
 
@@ -1165,6 +1166,7 @@ This project does not yet have a formal migration tool. For production with real
 - Do not commit uploaded user files.
 
 Detailed deployment options are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+The ByteGeist homelab runbook for `bytespace.casko.dev` is documented in [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md).
 Security notes are documented in [docs/SECURITY.md](docs/SECURITY.md).
 
 ### v1.7 Homepage/Dashboard
@@ -1441,6 +1443,20 @@ These limits are basic hardening, not complete abuse prevention.
 - Back up `UPLOADS_DIR`.
 - Remove or change seeded demo credentials before public deployment.
 - Remember: no email verification, password reset, or formal migration tool yet.
+
+### v2.2 ByteGeist Deployment Runbook
+
+ByteSpace v2.2 adds a practical Ubuntu/Nginx Proxy Manager homelab deployment runbook for `bytespace.casko.dev`.
+
+See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for:
+
+- `/opt/bytespace` clone and install commands
+- PostgreSQL database/user setup
+- production `.env` template with placeholders only
+- client build and production start commands
+- systemd service examples
+- Nginx Proxy Manager settings
+- upload persistence, update, backup, rollback, and smoke-test steps
 
 ## Next Pass
 
