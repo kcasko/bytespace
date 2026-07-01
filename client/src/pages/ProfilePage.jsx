@@ -6,6 +6,13 @@ import { getProfile } from '../api/profileApi.js';
 const fallbackProfileImage =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=500&q=80';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
+function toAssetUrl(url) {
+  if (!url) return '';
+  return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+}
+
 function Box({ title, children, className = '' }) {
   return (
     <section className={`retro-box ${className}`}>
@@ -35,7 +42,7 @@ function Sidebar({ profile }) {
       <Box title={`${profile.displayName}'s Blurbz`} className="profile-card">
         <img
           className="profile-photo"
-          src={profile.profileImageUrl || fallbackProfileImage}
+          src={toAssetUrl(profile.profileImageUrl) || fallbackProfileImage}
           alt={`${profile.displayName} profile`}
         />
         <div className="identity">
@@ -256,7 +263,7 @@ export default function ProfilePage({ currentUser }) {
   // The image overlays (but does not replace) the theme background color.
   const backgroundImageStyle = profile.backgroundImageUrl
     ? {
-        backgroundImage: `url(${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${profile.backgroundImageUrl})`,
+        backgroundImage: `url(${toAssetUrl(profile.backgroundImageUrl)})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'

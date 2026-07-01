@@ -638,6 +638,16 @@ button {
   text-shadow: 1px 1px 0 #00126f;
 }
 
+.profile-preview-avatar {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 0 8px;
+  object-fit: cover;
+  border: 3px ridge #ff00a8;
+  background: #111;
+}
+
 .profile-preview-panel div {
   padding: 8px;
   border: 3px solid;
@@ -686,31 +696,24 @@ button {
   border: 3px ridge #ff00a8;
 }
 
-/* Hide the native file input visually but keep it accessible */
 .upload-file-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-/* Styled proxy label that triggers the hidden file input */
-.upload-file-label {
   display: block;
-  margin-bottom: 6px;
+  width: 100%;
+  margin-bottom: 8px;
   padding: 6px 9px;
   border: 3px inset #9bdfff;
   background: #fff;
   color: #111;
   font: inherit;
-  cursor: pointer;
-  word-break: break-all;
 }
 
-.upload-file-label:hover {
-  background: #e8f7ff;
+.upload-file-name {
+  margin: -2px 0 8px;
+  color: #00126f;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 900;
+  word-break: break-all;
 }
 
 .upload-button {

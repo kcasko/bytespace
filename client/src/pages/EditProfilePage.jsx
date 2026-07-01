@@ -4,6 +4,11 @@ import { getMyProfile, updateMyProfile, uploadAvatar, uploadBackground } from '.
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+function toAssetUrl(url) {
+  if (!url) return '';
+  return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+}
+
 const fontOptions = [
   'Arial',
   'Verdana',
@@ -73,7 +78,7 @@ function ImageUploader({ label, fieldName, onUpload, currentUrl }) {
   // Sync preview when parent provides initial URL after profile loads
   useEffect(() => {
     if (currentUrl) {
-      setPreview(currentUrl.startsWith('http') ? currentUrl : `${API_BASE_URL}${currentUrl}`);
+      setPreview(toAssetUrl(currentUrl));
     }
   }, [currentUrl]);
 
@@ -102,10 +107,14 @@ function ImageUploader({ label, fieldName, onUpload, currentUrl }) {
     try {
       const publicUrl = await onUpload(file);
       setUploadStatus('success');
-      setUploadMessage('Image uploaded successfully!');
+      setUploadMessage(
+        fieldName === 'avatar'
+          ? 'Profile picture uploaded successfully.'
+          : 'Background image uploaded successfully.'
+      );
       setFile(null);
       // Switch preview to the persisted server URL
-      setPreview(`${API_BASE_URL}${publicUrl}`);
+      setPreview(toAssetUrl(publicUrl));
       if (inputRef.current) inputRef.current.value = '';
     } catch (err) {
       setUploadStatus('error');
@@ -127,7 +136,6 @@ function ImageUploader({ label, fieldName, onUpload, currentUrl }) {
         />
       )}
 
-      {/* Native file input — NOT inside a <label> so browser styling is applied cleanly */}
       <input
         ref={inputRef}
         id={`file-input-${fieldName}`}
@@ -136,9 +144,7 @@ function ImageUploader({ label, fieldName, onUpload, currentUrl }) {
         onChange={handleFileChange}
         className="upload-file-input"
       />
-      <label htmlFor={`file-input-${fieldName}`} className="upload-file-label">
-        {file ? file.name : 'Choose file…'}
-      </label>
+      {file && <div className="upload-file-name">{file.name}</div>}
 
       <button
         type="button"
@@ -169,6 +175,8 @@ export default function EditProfilePage({ currentUser }) {
   // The updateOwnProfile RETURNING clause does not include image URL columns.
   const [currentAvatarUrl, setCurrentAvatarUrl] = useState('');
   const [currentBackgroundUrl, setCurrentBackgroundUrl] = useState('');
+  const previewAvatarUrl = toAssetUrl(currentAvatarUrl || profile.profileImageUrl);
+  const previewBackgroundUrl = toAssetUrl(currentBackgroundUrl || profile.backgroundImageUrl);
 
   useEffect(() => {
     let ignore = false;
@@ -323,12 +331,22 @@ export default function EditProfilePage({ currentUser }) {
             className="profile-preview-panel"
             style={{
               background: profile.themeBackgroundColor,
+              backgroundImage: previewBackgroundUrl ? `url(${previewBackgroundUrl})` : undefined,
+              backgroundSize: previewBackgroundUrl ? 'cover' : undefined,
+              backgroundPosition: previewBackgroundUrl ? 'center' : undefined,
               color: profile.themeTextColor,
               borderColor: profile.themeBorderColor,
               fontFamily: profile.themeFontFamily
             }}
           >
             <h3 style={{ background: profile.themeHeaderColor }}>{profile.displayName || currentUser.username}</h3>
+            {previewAvatarUrl && (
+              <img
+                src={previewAvatarUrl}
+                alt={`${profile.displayName || currentUser.username} preview`}
+                className="profile-preview-avatar"
+              />
+            )}
             <p><b>Mood:</b> {profile.mood}</p>
             <div style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               <strong>{profile.headline}</strong>
