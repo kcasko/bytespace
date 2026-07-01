@@ -65,6 +65,8 @@ function mapEditableProfileRow(row) {
     music: row.music || '',
     movies: row.movies || '',
     games: row.games || '',
+    profileImageUrl: row.profile_image_url || '',
+    backgroundImageUrl: row.background_image_url || '',
     themeBackgroundColor: row.theme_background_color || '#1a0f6d',
     themeTextColor: row.theme_text_color || '#111111',
     themeBoxColor: row.theme_box_color || '#f5fbff',
@@ -87,6 +89,8 @@ export async function getOwnProfileByUserId(userId) {
         music,
         movies,
         games,
+        profile_image_url,
+        background_image_url,
         theme_background_color,
         theme_text_color,
         theme_box_color,
@@ -263,3 +267,48 @@ export async function getProfileByUsername(username) {
     }))
   };
 }
+
+/**
+ * Persist a new avatar URL for the given user.
+ * Returns the stored URL string, or null if no profile row was found.
+ */
+export async function updateProfileImageUrl(userId, publicUrl) {
+  const result = await query(
+    `
+      UPDATE profiles
+      SET profile_image_url = $2, updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING profile_image_url
+    `,
+    [userId, publicUrl]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return result.rows[0].profile_image_url;
+}
+
+/**
+ * Persist a new background image URL for the given user.
+ * Returns the stored URL string, or null if no profile row was found.
+ */
+export async function updateBackgroundImageUrl(userId, publicUrl) {
+  const result = await query(
+    `
+      UPDATE profiles
+      SET background_image_url = $2, updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING background_image_url
+    `,
+    [userId, publicUrl]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return result.rows[0].background_image_url;
+}
+

@@ -4,10 +4,17 @@ import {
   allowedProfileFonts,
   getOwnProfileByUserId,
   getProfileByUsername,
-  updateOwnProfile
+  updateOwnProfile,
+  updateProfileImageUrl,
+  updateBackgroundImageUrl
 } from '../db/profileQueries.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
+import {
+  avatarUploader,
+  backgroundUploader,
+  handleUploadError
+} from '../middleware/uploadMiddleware.js';
 
 const router = Router();
 
@@ -153,5 +160,82 @@ router.get('/:username', async (req, res) => {
     return res.status(500).json({ error: 'Profile unavailable' });
   }
 });
+
+// ── Image upload routes ──────────────────────────────────────────────────────
+
+/**
+ * POST /api/profile/me/avatar
+ * Form field: avatar
+ * Requires authentication.
+ * Saves the uploaded file and updates profile_image_url in PostgreSQL.
+ * Returns the public URL path only (never a local filesystem path).
+ */
+router.post(
+  '/me/avatar',
+  sessionMiddleware,
+  requireAuth,
+  avatarUploader.single('avatar'),
+  handleUploadError,
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided.' });
+    }
+
+    // Build the public URL served by the static middleware in server.js
+    const publicUrl = `/uploads/avatars/${req.file.filename}`;
+
+    try {
+      const savedUrl = await updateProfileImageUrl(req.session.user.id, publicUrl);
+
+      if (savedUrl === null) {
+        return res.status(404).json({ error: 'Profile not found.' });
+      }
+
+      return res.json({ profileImageUrl: savedUrl });
+    } catch (error) {
+      console.error('Failed to save avatar URL:', { code: error.code, message: error.message });
+      return res.status(500).json({ error: 'Avatar upload failed.' });
+    }
+  }
+);
+
+/**
+ * POST /api/profile/me/background
+ * Form field: background
+ * Requires authentication.
+ * Saves the uploaded file and updates background_image_url in PostgreSQL.
+ * Returns the public URL path only (never a local filesystem path).
+ */
+router.post(
+  '/me/background',
+  sessionMiddleware,
+  requireAuth,
+  backgroundUploader.single('background'),
+  handleUploadError,
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided.' });
+    }
+
+    const publicUrl = `/uploads/backgrounds/${req.file.filename}`;
+
+    try {
+      const savedUrl = await updateBackgroundImageUrl(req.session.user.id, publicUrl);
+
+      if (savedUrl === null) {
+        return res.status(404).json({ error: 'Profile not found.' });
+      }
+
+      return res.json({ backgroundImageUrl: savedUrl });
+    } catch (error) {
+      console.error('Failed to save background URL:', { code: error.code, message: error.message });
+      return res.status(500).json({ error: 'Background upload failed.' });
+    }
+  }
+);
+
+// Multer error handler must come after the upload routes so it catches
+// errors thrown by the multer middleware above.
+router.use(handleUploadError);
 
 export default router;

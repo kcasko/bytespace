@@ -8,3 +8,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 profile-preview.png
+
+# Uploaded user files — ignore all contents but keep placeholder directories
+server/uploads/*
+!server/uploads/.gitkeep
+!server/uploads/avatars/
+!server/uploads/avatars/.gitkeep
+!server/uploads/backgrounds/
+!server/uploads/backgrounds/.gitkeep

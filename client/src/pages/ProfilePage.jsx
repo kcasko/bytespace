@@ -252,8 +252,22 @@ export default function ProfilePage({ currentUser }) {
     fontFamily: profile.theme.fontFamily || 'Arial, Helvetica, sans-serif'
   } : undefined;
 
+  // Apply background image when the profile has one set.
+  // The image overlays (but does not replace) the theme background color.
+  const backgroundImageStyle = profile.backgroundImageUrl
+    ? {
+        backgroundImage: `url(${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${profile.backgroundImageUrl})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }
+    : {};
+
   return (
-    <main className="page-shell profile-themed-shell" style={themeStyle}>
+    <main
+      className="page-shell profile-themed-shell"
+      style={{ ...themeStyle, ...backgroundImageStyle }}
+    >
       <div className="status-strip">
         <marquee>BYTE ALERT: Keith updated his mood and may be operating on caffeine and spite.</marquee>
       </div>

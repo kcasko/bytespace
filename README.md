@@ -250,6 +250,124 @@ bytespace/
   README.md
 ```
 
+### v0.8 Image Uploads Verification
+
+ByteSpace v0.8 adds authenticated profile picture and background image uploads stored locally on the server.
+
+#### Upload Routes
+
+| Method | Route | Field | Description |
+|--------|-------|-------|-------------|
+| `POST` | `/api/profile/me/avatar` | `avatar` | Upload profile picture |
+| `POST` | `/api/profile/me/background` | `background` | Upload background image |
+
+Both routes require a valid session cookie. Logged-out requests receive `401 Authentication required`.
+
+#### Allowed Image Types
+
+- `image/jpeg`
+- `image/png`
+- `image/webp`
+- `image/gif`
+
+SVG and all other file types are rejected with `400 Unsupported image type`.
+
+#### File Size Limits
+
+| Upload | Limit |
+|--------|-------|
+| Avatar (`/me/avatar`) | 2 MB |
+| Background (`/me/background`) | 5 MB |
+
+Oversized files are rejected with `400 File is too large`.
+
+#### Storage Path
+
+Uploaded files are written to:
+
+```text
+server/uploads/avatars/       ← profile pictures
+server/uploads/backgrounds/   ← background images
+```
+
+Filenames are randomly generated hex strings (e.g. `a3f8c21b...jpg`) — original filenames are never used. Files in `server/uploads/` are excluded from git via `.gitignore`. Directory placeholders (`.gitkeep`) are committed.
+
+Public URLs served to the frontend follow this pattern:
+
+```text
+/uploads/avatars/<filename>
+/uploads/backgrounds/<filename>
+```
+
+Example: `http://localhost:5000/uploads/avatars/abc123def456.jpg`
+
+#### curl Examples
+
+```bash
+# Upload avatar (requires active session cookie)
+curl -i -b cookies.txt \
+  -F "avatar=@/path/to/photo.jpg" \
+  http://localhost:5000/api/profile/me/avatar
+
+# Upload background
+curl -i -b cookies.txt \
+  -F "background=@/path/to/banner.png" \
+  http://localhost:5000/api/profile/me/background
+```
+
+#### Verification Steps
+
+1. Start Docker PostgreSQL if needed:
+
+   ```bash
+   docker run --name bytespace-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=bytespace -p 55432:5432 -d postgres:16
+   ```
+
+2. Start the backend:
+
+   ```bash
+   cd bytespace/server && npm run dev
+   ```
+
+3. Start the frontend:
+
+   ```bash
+   cd bytespace/client && npm run dev
+   ```
+
+4. Log in as Keith at `http://localhost:5173/login`:
+
+   ```text
+   username: keith
+   password: password123
+   ```
+
+5. Go to `http://localhost:5173/profile/edit`.
+
+6. In the **Profile Picture** section, choose a JPEG/PNG/WebP/GIF and click **Upload Profile Picture**. Confirm the success message and preview update.
+
+7. In the **Background Image** section, choose an image and click **Upload Background Image**. Confirm success.
+
+8. Visit `http://localhost:5173/profile/keith`.
+
+9. Confirm:
+   - Profile image appears in the sidebar.
+   - Background image renders across the page shell.
+
+10. Refresh the page and confirm both images persist (they are stored in PostgreSQL and served from disk).
+
+11. Try uploading an unsupported file type (e.g. `.txt` or `.svg`) and confirm the `Unsupported image type` error.
+
+12. Log out and try to upload via curl without a cookie — confirm `401 Authentication required`.
+
+13. Verify health endpoints:
+
+    ```bash
+    curl http://localhost:5000/api/health
+    curl http://localhost:5000/api/db/health
+    curl http://localhost:5000/api/profile/keith
+    ```
+
 ## Next Pass
 
-The next pass should add profile editing, then uploads, comments posting, and connected Top 8 management in later milestones.
+The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then connected Top 8 management and messaging.
