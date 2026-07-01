@@ -2,12 +2,19 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Resolve upload directories relative to this file: server/src/middleware → server/uploads
-const uploadsRoot = path.resolve(__dirname, '..', '..', 'uploads');
+const serverRoot = path.resolve(__dirname, '..', '..');
+const uploadsDir = process.env.UPLOADS_DIR || 'uploads';
+export const uploadsRoot = path.isAbsolute(uploadsDir)
+  ? uploadsDir
+  : path.resolve(serverRoot, uploadsDir);
+
+fs.mkdirSync(path.join(uploadsRoot, 'avatars'), { recursive: true });
+fs.mkdirSync(path.join(uploadsRoot, 'backgrounds'), { recursive: true });
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',

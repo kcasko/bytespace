@@ -44,11 +44,14 @@ The server reads `DATABASE_URL` from `server/.env`.
 Example `server/.env`:
 
 ```env
+NODE_ENV=development
 PORT=5000
 CLIENT_ORIGIN=http://localhost:5173
 DATABASE_URL=postgres://postgres:postgres@localhost:55432/bytespace
 SESSION_SECRET=replace-this-with-a-long-random-secret
-NODE_ENV=development
+UPLOADS_DIR=uploads
+TRUST_PROXY=false
+SESSION_COOKIE_SAMESITE=lax
 ```
 
 Health check:
@@ -180,6 +183,8 @@ When the database is available, `/api/profile/:username` reads from PostgreSQL. 
 Auth responses return only safe user fields: `id`, `username`, and `email`. Password hashes are never returned to the frontend.
 
 Sessions are stored in PostgreSQL through `connect-pg-simple` using the `session` table in `database/schema.sql`.
+
+For deployment details, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### v0.6 Profile Editor Verification
 
@@ -1025,6 +1030,135 @@ Are you sure you want to block @username?
 25. Try blocking the same user twice and confirm no duplicate rows.
 26. Confirm `npm run build` passes in `client/`.
 27. Smoke check comments, bulletins, browse, friends, Top 8, profile editor, theme controls, avatar upload, background upload, profile song, and privacy settings.
+
+### v1.6 Deployment Prep
+
+ByteSpace v1.6 prepares the app for realistic deployment without deploying it yet.
+
+#### Environment Files
+
+Server example:
+
+```text
+server/.env.example
+```
+
+Required server variables:
+
+- `NODE_ENV`
+- `PORT`
+- `CLIENT_ORIGIN`
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `UPLOADS_DIR`
+
+Optional deployment variables:
+
+- `TRUST_PROXY`
+- `SESSION_COOKIE_SAMESITE`
+
+Client example:
+
+```text
+client/.env.example
+```
+
+Required client variable:
+
+- `VITE_API_BASE_URL`
+
+All frontend API helpers use `import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"`.
+
+#### Root Scripts
+
+The repo root has convenience scripts:
+
+```bash
+npm run dev:client
+npm run dev:server
+npm run build
+npm run build:client
+npm run start:server
+```
+
+Client scripts still work from `client/`, and server scripts still work from `server/`.
+
+#### Local Development Checklist
+
+1. Install frontend dependencies: `cd client && npm install`.
+2. Install backend dependencies: `cd server && npm install`.
+3. Copy env files: `cp client/.env.example client/.env` and `cp server/.env.example server/.env`.
+4. Start Docker PostgreSQL:
+
+   ```bash
+   docker run --name bytespace-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=bytespace -p 55432:5432 -d postgres:16
+   ```
+
+5. Load schema and seed:
+
+   ```bash
+   psql -h localhost -p 55432 -U postgres -d bytespace -f database/schema.sql
+   psql -h localhost -p 55432 -U postgres -d bytespace -f database/seed.sql
+   ```
+
+6. Start backend: `cd server && npm run dev`.
+7. Start frontend: `cd client && npm run dev`.
+
+#### Production Checklist
+
+- Set `NODE_ENV=production`.
+- Set production `DATABASE_URL`.
+- Set a strong `SESSION_SECRET`.
+- Set exact `CLIENT_ORIGIN`.
+- Set frontend `VITE_API_BASE_URL`.
+- Run `npm run build` in `client/`.
+- Start backend with `npm start` from `server/`.
+- Configure HTTPS and a reverse proxy or managed platform routing.
+- Set `TRUST_PROXY=true` when behind a proxy.
+- Back up PostgreSQL.
+- Back up `UPLOADS_DIR`.
+- Do not use the dev seed password in production.
+- Do not expose `.env`.
+
+#### CORS And Sessions
+
+The backend reads `CLIENT_ORIGIN` from env and enables credentialed CORS. Do not use wildcard origins with session cookies.
+
+Sessions use PostgreSQL through `connect-pg-simple`. `MemoryStore` is not used.
+
+Development cookies use `httpOnly`, `sameSite=lax`, and non-secure cookies. Production uses secure cookies. If the frontend and API are on different domains, `SESSION_COOKIE_SAMESITE=none` plus HTTPS may be required.
+
+#### Upload Storage
+
+Uploaded avatars and backgrounds are served from `/uploads` and stored under `UPLOADS_DIR`, defaulting to `server/uploads`.
+
+Local disk uploads are fine for a single-server demo. For real production, use persistent disk with backups or add object storage later.
+
+#### Database Migrations
+
+Fresh local DB:
+
+```bash
+createdb bytespace
+psql -d bytespace -f database/schema.sql
+psql -d bytespace -f database/seed.sql
+```
+
+Existing local DBs currently rely on `database/seed.sql` using `ADD COLUMN IF NOT EXISTS` and `CREATE TABLE IF NOT EXISTS` for incremental development changes.
+
+This project does not yet have a formal migration tool. For production with real users, add migrations before changing schema.
+
+#### Security Notes
+
+- Local uploads are not cloud storage.
+- No raw custom CSS yet.
+- No email verification yet.
+- No password reset yet.
+- No formal migrations yet.
+- Do not expose `.env`.
+- Do not commit uploaded user files.
+
+Detailed deployment options are documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Next Pass
 

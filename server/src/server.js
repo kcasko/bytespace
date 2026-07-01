@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import authRoutes from './routes/authRoutes.js';
 import blockRoutes from './routes/blockRoutes.js';
 import bulletinRoutes from './routes/bulletinRoutes.js';
@@ -13,12 +11,15 @@ import profileRoutes from './routes/profileRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { sessionMiddleware } from './middleware/sessionMiddleware.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { uploadsRoot } from './middleware/uploadMiddleware.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
+const environment = process.env.NODE_ENV || 'development';
+
+if (process.env.TRUST_PROXY === 'true' || environment === 'production') {
+  app.set('trust proxy', 1);
+}
 
 app.use(cors({
   origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
@@ -26,14 +27,16 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Serve uploaded user images from server/uploads as /uploads/*
-// e.g. /uploads/avatars/abc123.jpg, /uploads/backgrounds/xyz456.webp
-app.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')));
+// Serve uploaded user images from UPLOADS_DIR as /uploads/*.
+// Local disk is acceptable for a single-server demo; production should plan
+// backups or object storage before real users depend on uploaded files.
+app.use('/uploads', express.static(uploadsRoot));
 
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
-    service: 'bytespace-api'
+    service: 'bytespace-api',
+    environment
   });
 });
 
