@@ -181,6 +181,18 @@ Auth responses return only safe user fields: `id`, `username`, and `email`. Pass
 
 Sessions are stored in PostgreSQL through `connect-pg-simple` using the `session` table in `database/schema.sql`.
 
+### v0.6 Profile Editor Verification
+
+1. Start Docker PostgreSQL if using it.
+2. Re-run `database/schema.sql` and `database/seed.sql`.
+3. Start the backend and frontend.
+4. Log in as seeded Keith with `keith` / `password123`.
+5. Go to `http://localhost:5173/profile/edit`.
+6. Change mood, headline, about text, or theme settings.
+7. Save.
+8. Visit `http://localhost:5173/profile/keith`.
+9. Confirm the public profile shows the saved updates.
+
 ## Project Structure
 
 ```text

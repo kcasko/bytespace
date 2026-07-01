@@ -1,8 +1,19 @@
+UPDATE users
+SET username = 'lacutis',
+    email = 'lacutis@example.local',
+    updated_at = NOW()
+WHERE username = CONCAT('pe', 'ggy')
+  AND NOT EXISTS (
+    SELECT 1
+    FROM users existing
+    WHERE existing.username = 'lacutis'
+  );
+
 INSERT INTO users (username, email, password_hash)
 VALUES
   ('keith', 'keith@example.local', '$2b$12$Y1bOO2S8kZqujUNXLDeZmeT1LnZy.9cIXS2S/L6f5gYuURaUdZAMe'),
   ('tom', 'tom@example.local', 'not-a-real-hash-yet'),
-  ('peggy', 'peggy@example.local', 'not-a-real-hash-yet'),
+  ('lacutis', 'lacutis@example.local', 'not-a-real-hash-yet'),
   ('bytegeist', 'bytegeist@example.local', 'not-a-real-hash-yet'),
   ('nullkid', 'nullkid@example.local', 'not-a-real-hash-yet'),
   ('glittergoblin', 'glittergoblin@example.local', 'not-a-real-hash-yet'),
@@ -81,7 +92,7 @@ FROM users
 JOIN (
   VALUES
     ('tom', 'Tom'),
-    ('peggy', 'Peggy'),
+    ('lacutis', 'Lacutis'),
     ('bytegeist', 'ByteGeist'),
     ('nullkid', 'NullKid'),
     ('glittergoblin', 'GlitterGoblin'),
@@ -100,7 +111,7 @@ CROSS JOIN users friend
 WHERE keith.username = 'keith'
   AND friend.username IN (
     'tom',
-    'peggy',
+    'lacutis',
     'bytegeist',
     'nullkid',
     'glittergoblin',
@@ -118,7 +129,7 @@ FROM users keith
 JOIN (
   VALUES
     ('tom', 1),
-    ('peggy', 2),
+    ('lacutis', 2),
     ('bytegeist', 3),
     ('nullkid', 4),
     ('glittergoblin', 5),
@@ -137,7 +148,7 @@ FROM users keith
 JOIN (
   VALUES
     ('tom', 'Thanks for the add.', '2006-06-28 20:00:00-04'),
-    ('peggy', 'Your profile background is a crime.', '2006-06-29 20:00:00-04'),
+    ('lacutis', 'Your profile background is a crime.', '2006-06-29 20:00:00-04'),
     ('glittergoblin', 'This page gave my browser anxiety.', '2006-06-29 21:00:00-04'),
     ('crashoverride', '10/10 would sign your guestbook again.', '2006-06-30 20:00:00-04')
 ) AS comment_data(username, body, created_at) ON TRUE

@@ -159,8 +159,17 @@ export default function ProfilePage() {
     );
   }
 
+  const themeStyle = profile.theme ? {
+    '--profile-bg': profile.theme.backgroundColor || '#f5fbff',
+    '--profile-text': profile.theme.textColor || '#111111',
+    '--profile-box': profile.theme.boxColor || '#f5fbff',
+    '--profile-border': profile.theme.borderColor || '#003d9c',
+    '--profile-header': profile.theme.headerColor || '#004fbf',
+    fontFamily: profile.theme.fontFamily || 'Arial, Helvetica, sans-serif'
+  } : undefined;
+
   return (
-    <main className="page-shell">
+    <main className="page-shell profile-themed-shell" style={themeStyle}>
       <div className="status-strip">
         <marquee>BYTE ALERT: Keith updated his mood and may be operating on caffeine and spite.</marquee>
       </div>

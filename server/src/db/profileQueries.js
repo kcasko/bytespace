@@ -1,5 +1,16 @@
 import { query } from './pool.js';
 
+export const allowedProfileFonts = [
+  'Arial',
+  'Verdana',
+  'Tahoma',
+  'Trebuchet MS',
+  'Georgia',
+  'Times New Roman',
+  'Courier New',
+  'Comic Sans MS'
+];
+
 function formatProfileDate(value) {
   if (!value) {
     return '';
@@ -41,6 +52,124 @@ function mapProfileRow(row) {
       fontFamily: row.theme_font_family
     }
   };
+}
+
+function mapEditableProfileRow(row) {
+  return {
+    displayName: row.display_name || '',
+    headline: row.headline || '',
+    mood: row.mood || '',
+    aboutMe: row.about_me || '',
+    whoIdLikeToMeet: row.who_id_like_to_meet || '',
+    generalInterests: row.general_interests || '',
+    music: row.music || '',
+    movies: row.movies || '',
+    games: row.games || '',
+    themeBackgroundColor: row.theme_background_color || '#1a0f6d',
+    themeTextColor: row.theme_text_color || '#111111',
+    themeBoxColor: row.theme_box_color || '#f5fbff',
+    themeBorderColor: row.theme_border_color || '#003d9c',
+    themeHeaderColor: row.theme_header_color || '#004fbf',
+    themeFontFamily: row.theme_font_family || 'Arial'
+  };
+}
+
+export async function getOwnProfileByUserId(userId) {
+  const result = await query(
+    `
+      SELECT
+        display_name,
+        headline,
+        mood,
+        about_me,
+        who_id_like_to_meet,
+        general_interests,
+        music,
+        movies,
+        games,
+        theme_background_color,
+        theme_text_color,
+        theme_box_color,
+        theme_border_color,
+        theme_header_color,
+        theme_font_family
+      FROM profiles
+      WHERE user_id = $1
+    `,
+    [userId]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapEditableProfileRow(result.rows[0]);
+}
+
+export async function updateOwnProfile(userId, profileInput) {
+  const result = await query(
+    `
+      UPDATE profiles
+      SET
+        display_name = $2,
+        headline = $3,
+        mood = $4,
+        about_me = $5,
+        who_id_like_to_meet = $6,
+        general_interests = $7,
+        music = $8,
+        movies = $9,
+        games = $10,
+        theme_background_color = $11,
+        theme_text_color = $12,
+        theme_box_color = $13,
+        theme_border_color = $14,
+        theme_header_color = $15,
+        theme_font_family = $16,
+        updated_at = NOW()
+      WHERE user_id = $1
+      RETURNING
+        display_name,
+        headline,
+        mood,
+        about_me,
+        who_id_like_to_meet,
+        general_interests,
+        music,
+        movies,
+        games,
+        theme_background_color,
+        theme_text_color,
+        theme_box_color,
+        theme_border_color,
+        theme_header_color,
+        theme_font_family
+    `,
+    [
+      userId,
+      profileInput.displayName,
+      profileInput.headline,
+      profileInput.mood,
+      profileInput.aboutMe,
+      profileInput.whoIdLikeToMeet,
+      profileInput.generalInterests,
+      profileInput.music,
+      profileInput.movies,
+      profileInput.games,
+      profileInput.themeBackgroundColor,
+      profileInput.themeTextColor,
+      profileInput.themeBoxColor,
+      profileInput.themeBorderColor,
+      profileInput.themeHeaderColor,
+      profileInput.themeFontFamily
+    ]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return mapEditableProfileRow(result.rows[0]);
 }
 
 export async function getProfileByUsername(username) {

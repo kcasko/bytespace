@@ -108,6 +108,21 @@ button {
   background: #f5fbff;
 }
 
+.profile-themed-shell {
+  background: var(--profile-bg, rgba(255, 255, 255, 0.88));
+  color: var(--profile-text, #111);
+}
+
+.profile-themed-shell .retro-box {
+  border-color: var(--profile-border, #003d9c);
+  background: var(--profile-box, #f5fbff);
+}
+
+.profile-themed-shell .retro-box h2 {
+  border-bottom-color: var(--profile-border, #003d9c);
+  background: var(--profile-header, #004fbf);
+}
+
 .retro-box h2 {
   margin: 0;
   padding: 6px 8px;
@@ -440,6 +455,127 @@ button {
   background: linear-gradient(#fff73b, #ff9de5);
   color: #00126f;
   font-weight: 900;
+  text-transform: uppercase;
+}
+
+.editor-shell {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 0, 168, 0.12) 0 8px, rgba(0, 197, 255, 0.12) 8px 16px),
+    rgba(255, 255, 255, 0.92);
+}
+
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 10px;
+  align-items: start;
+}
+
+.editor-panel {
+  border: 4px double #003d9c;
+  background: #fffdea;
+}
+
+.editor-panel h1,
+.editor-panel h2 {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 4px solid #003d9c;
+  background: linear-gradient(90deg, #003d9c, #ff00a8, #fff73b);
+  color: #fff;
+  font-size: 20px;
+  text-shadow: 2px 2px 0 #00126f;
+}
+
+.editor-panel fieldset {
+  margin: 10px;
+  padding: 10px;
+  border: 3px ridge #00c5ff;
+  background: #f5fbff;
+}
+
+.editor-panel legend {
+  padding: 3px 7px;
+  border: 2px outset #ff9de5;
+  background: #fff73b;
+  color: #00126f;
+  font-weight: 900;
+}
+
+.editor-panel label {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 9px;
+  color: #00126f;
+  font-weight: 900;
+}
+
+.editor-panel input,
+.editor-panel textarea,
+.editor-panel select {
+  width: 100%;
+  padding: 7px;
+  border: 3px inset #9bdfff;
+  background: #fff;
+  color: #111;
+  font: inherit;
+}
+
+.editor-panel textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.color-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 6px;
+}
+
+.color-row input[type="color"] {
+  height: 37px;
+  padding: 2px;
+}
+
+.editor-success {
+  margin: 10px;
+  padding: 8px;
+  border: 3px dashed #008a32;
+  background: #c7ffd7;
+  color: #003d14;
+  font-weight: 900;
+}
+
+.profile-preview-panel {
+  margin: 10px;
+  padding: 8px;
+  border: 4px solid;
+}
+
+.profile-preview-panel h3 {
+  margin: -8px -8px 8px;
+  padding: 7px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #00126f;
+}
+
+.profile-preview-panel div {
+  padding: 8px;
+  border: 3px solid;
+}
+
+.save-profile-button,
+.view-profile-link {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 10px;
+  padding: 9px;
+  border: 3px outset #ff9de5;
+  background: linear-gradient(#fff73b, #ff9de5);
+  color: #00126f;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
   text-transform: uppercase;
 }
 
