@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getComments, postComment } from '../api/commentApi.js';
 import { getProfile } from '../api/profileApi.js';
 
@@ -75,15 +75,36 @@ function Sidebar({ profile }) {
 function TopFriends({ friends }) {
   return (
     <Box title="Top 8">
-      <div className="friends-grid">
-        {friends.map((friend, index) => (
-          <article className="friend-tile" key={friend}>
-            <div className="friend-avatar">{friend.slice(0, 2).toUpperCase()}</div>
-            <strong>{friend}</strong>
-            <span>#{index + 1}</span>
-          </article>
-        ))}
-      </div>
+      {friends.length === 0 ? (
+        <div className="friend-empty-note">This user has not weaponized friendship rankings yet.</div>
+      ) : (
+        <div className="friends-grid">
+          {friends.map((friend, index) => {
+            const friendObject = typeof friend === 'string'
+              ? { displayName: friend, username: friend.toLowerCase(), profileImageUrl: '' }
+              : friend;
+
+            return (
+              <article className="friend-tile" key={friendObject.id || friendObject.username || friendObject.displayName}>
+                {friendObject.profileImageUrl ? (
+                  <img
+                    className="friend-avatar friend-avatar--image"
+                    src={toAssetUrl(friendObject.profileImageUrl)}
+                    alt={`${friendObject.displayName} avatar`}
+                  />
+                ) : (
+                  <div className="friend-avatar">{friendObject.displayName.slice(0, 2).toUpperCase()}</div>
+                )}
+                <Link to={`/profile/${friendObject.username}`}>
+                  <strong>{friendObject.displayName}</strong>
+                </Link>
+                <span>@{friendObject.username}</span>
+                <span>#{friendObject.position || index + 1}</span>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </Box>
   );
 }

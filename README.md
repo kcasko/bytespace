@@ -427,6 +427,87 @@ psql -h localhost -p 55432 -U postgres -d bytespace -f database/seed.sql
 15. Confirm guestbook comments still render.
 16. Confirm `npm run build` passes in `client/`.
 
+### v1.0 Friends and Top 8 Management
+
+ByteSpace v1.0 adds a simple authenticated friends system and lets users manage their Top 8.
+
+#### Friend Routes
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/friends` | Return accepted friends for the current user |
+| `GET` | `/api/friends/requests` | Return incoming and outgoing pending friend requests |
+| `POST` | `/api/friends/request/:username` | Send a friend request |
+| `POST` | `/api/friends/accept/:username` | Accept an incoming friend request |
+| `POST` | `/api/friends/reject/:username` | Reject an incoming friend request |
+
+All friend routes require a valid session cookie.
+
+#### Top 8 Routes
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/friends/top` | Return the current user's Top 8 |
+| `PUT` | `/api/friends/top` | Replace the current user's Top 8 with an ordered list |
+
+`PUT /api/friends/top` accepts:
+
+```json
+{
+  "friendUserIds": [2, 3, 4]
+}
+```
+
+Rules:
+
+- Users cannot friend themselves.
+- Duplicate pending or accepted friendships are rejected safely.
+- Only the receiver can accept or reject an incoming request.
+- Only accepted friends can be added to Top 8.
+- Top 8 accepts at most 8 users.
+- Saved Top 8 positions are stored as 1 through 8.
+- Password hashes are never returned.
+
+#### Seeded Friends
+
+The seed data gives Keith accepted friendships with:
+
+- Tom
+- Lacutis
+- ByteGeist
+- NullKid
+- GlitterGoblin
+- LinuxGoblin
+- CrashOverride
+- DialUpDemon
+
+Keith's seeded Top 8 uses those friends in positions 1 through 8. `database/seed.sql` is safe to re-run for this setup and refreshes Keith's seeded Top 8 order.
+
+#### Verification Steps
+
+1. Start PostgreSQL.
+2. Start the backend: `cd bytespace/server && npm run dev`.
+3. Start the frontend: `cd bytespace/client && npm run dev`.
+4. Log in as Keith with `keith` / `password123`.
+5. Visit `http://localhost:5173/profile/keith`.
+6. Confirm Top 8 renders from PostgreSQL.
+7. Go to `http://localhost:5173/friends`.
+8. Confirm accepted friends display.
+9. Confirm current Top 8 displays.
+10. Reorder Top 8 with **Up** and **Down**.
+11. Click **Save Top 8**.
+12. Visit `/profile/keith` and confirm the public Top 8 order changed.
+13. Refresh `/profile/keith` and confirm the order persists.
+14. Register a new user.
+15. As the new user, send a friend request to `keith`.
+16. Log out.
+17. Log in as Keith.
+18. Go to `/friends` and confirm the incoming request appears.
+19. Accept the request and confirm the new user appears in Keith's friends list.
+20. Try sending a friend request to yourself and confirm it is rejected.
+21. Try a duplicate friend request and confirm a useful error/status appears.
+22. Confirm `npm run build` passes in `client/`.
+
 ## Next Pass
 
-The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then connected Top 8 management and messaging.
+The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

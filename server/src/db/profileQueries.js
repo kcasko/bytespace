@@ -240,7 +240,11 @@ export async function getProfileByUsername(username) {
     query(
       `
         SELECT
-          COALESCE(friend_profiles.display_name, friend_users.username) AS display_name
+          friend_users.id,
+          friend_users.username,
+          COALESCE(friend_profiles.display_name, friend_users.username) AS display_name,
+          friend_profiles.profile_image_url,
+          top_friends.position
         FROM top_friends
         INNER JOIN users friend_users ON friend_users.id = top_friends.friend_id
         LEFT JOIN profiles friend_profiles ON friend_profiles.user_id = friend_users.id
@@ -277,7 +281,13 @@ export async function getProfileByUsername(username) {
 
   return {
     ...profile,
-    topFriends: topFriendsResult.rows.map((friend) => friend.display_name),
+    topFriends: topFriendsResult.rows.map((friend) => ({
+      id: friend.id,
+      username: friend.username,
+      displayName: friend.display_name,
+      profileImageUrl: friend.profile_image_url || '',
+      position: friend.position
+    })),
     comments: commentsResult.rows.map((comment) => ({
       author: comment.author,
       body: comment.body,

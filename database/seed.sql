@@ -142,6 +142,11 @@ ON CONFLICT (requester_id, receiver_id) DO UPDATE SET
   status = EXCLUDED.status,
   updated_at = NOW();
 
+DELETE FROM top_friends
+USING users
+WHERE top_friends.user_id = users.id
+  AND users.username = 'keith';
+
 INSERT INTO top_friends (user_id, friend_id, position)
 SELECT keith.id, friend.id, friend_order.position
 FROM users keith
