@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import ReportAction from '../components/ReportAction.jsx';
 import {
   createBulletin,
   deleteBulletin,
@@ -19,7 +20,7 @@ function formatBulletinDate(value) {
   }).format(new Date(value));
 }
 
-function BulletinCard({ bulletin, showAuthor = false, actions }) {
+function BulletinCard({ bulletin, showAuthor = false, actions, currentUser }) {
   return (
     <article className="bulletin-card">
       <header>
@@ -33,7 +34,17 @@ function BulletinCard({ bulletin, showAuthor = false, actions }) {
         </div>
       )}
       <p>{bulletin.body}</p>
-      {actions && <div className="bulletin-card__actions">{actions}</div>}
+      {(actions || currentUser) && (
+        <div className="bulletin-card__actions">
+          {actions}
+          <ReportAction
+            currentUser={currentUser}
+            targetType="bulletin"
+            targetId={bulletin.id}
+            label="Report Bulletin"
+          />
+        </div>
+      )}
     </article>
   );
 }
@@ -168,6 +179,7 @@ export default function BulletinsPage({ currentUser }) {
               <BulletinCard
                 key={bulletin.id}
                 bulletin={bulletin}
+                currentUser={currentUser}
                 actions={(
                   <button type="button" onClick={() => removeBulletin(bulletin.id)}>
                     Delete
@@ -182,7 +194,7 @@ export default function BulletinsPage({ currentUser }) {
             {friendBulletins.length === 0 ? (
               <div className="friend-empty-note">No friend bulletins yet.</div>
             ) : friendBulletins.map((bulletin) => (
-              <BulletinCard key={bulletin.id} bulletin={bulletin} showAuthor />
+              <BulletinCard key={bulletin.id} bulletin={bulletin} showAuthor currentUser={currentUser} />
             ))}
           </section>
         </div>

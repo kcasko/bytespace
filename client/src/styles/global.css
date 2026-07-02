@@ -1886,3 +1886,34 @@ button {
 .status-pill.danger {
   background: #ffd6d6;
 }
+
+
+.report-action {
+  margin-top: 0.5rem;
+}
+
+.subtle-button {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.report-form {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.65rem;
+  border: 2px dashed #991b1b;
+  background: #fff8dc;
+}
+
+.report-form textarea {
+  min-height: 80px;
+}
+
+
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+}

@@ -11,6 +11,7 @@ import {
   suspendUserByUsername,
   unsuspendUserByUsername
 } from '../db/adminQueries.js';
+import { getReportById, getReports, reportStatuses, updateReportStatus } from '../db/reportQueries.js';
 import { requireAdmin } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
 
@@ -25,6 +26,78 @@ function parseLimit(value, fallback = 25, max = 100) {
   }
   return Math.min(parsed, max);
 }
+
+
+router.get('/reports', async (req, res) => {
+  const status = typeof req.query?.status === 'string' ? req.query.status.trim() : '';
+
+  if (status && !reportStatuses.has(status)) {
+    return res.status(400).json({ error: 'Report status is not supported.' });
+  }
+
+  try {
+    const reports = await getReports({
+      status,
+      limit: parseLimit(req.query?.limit, 50, 100)
+    });
+    return res.json({ reports });
+  } catch (error) {
+    console.error('Failed to load reports:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Reports unavailable.' });
+  }
+});
+
+router.get('/reports/:id', async (req, res) => {
+  const reportId = Number(req.params.id);
+
+  if (!Number.isInteger(reportId) || reportId <= 0) {
+    return res.status(400).json({ error: 'Report ID is invalid.' });
+  }
+
+  try {
+    const report = await getReportById(reportId);
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found.' });
+    }
+
+    return res.json({ report });
+  } catch (error) {
+    console.error('Failed to load report:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Report unavailable.' });
+  }
+});
+
+router.put('/reports/:id/status', async (req, res) => {
+  const reportId = Number(req.params.id);
+  const status = String(req.body?.status || '').trim();
+  const adminNote = String(req.body?.adminNote || '').trim();
+
+  if (!Number.isInteger(reportId) || reportId <= 0) {
+    return res.status(400).json({ error: 'Report ID is invalid.' });
+  }
+
+  if (!reportStatuses.has(status)) {
+    return res.status(400).json({ error: 'Report status is not supported.' });
+  }
+
+  if (adminNote.length > 1000) {
+    return res.status(400).json({ error: 'Admin note must be 1000 characters or less.' });
+  }
+
+  try {
+    const report = await updateReportStatus(reportId, req.session.user.id, { status, adminNote });
+
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found.' });
+    }
+
+    return res.json({ report });
+  } catch (error) {
+    console.error('Failed to update report:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Report update failed.' });
+  }
+});
 
 router.get('/users', async (req, res) => {
   try {

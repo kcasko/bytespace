@@ -445,6 +445,32 @@ Moderation capabilities in v2.5:
 
 Do not edit or print `/opt/bytespace/server/.env` while performing admin bootstrap.
 
+### User Reports and Safety Review
+
+ByteSpace v2.6 adds a `content_reports` table and report workflow. Logged-in users can report:
+
+- profiles
+- comments
+- bulletins
+
+User route:
+
+```text
+POST /api/reports
+```
+
+Admin routes:
+
+```text
+GET /api/admin/reports
+GET /api/admin/reports/:id
+PUT /api/admin/reports/:id/status
+```
+
+Allowed report statuses are `open`, `reviewed`, `dismissed`, and `action_taken`. Admins review reports at `/admin`, can add an admin note while changing status, and can use existing moderation actions from report context: suspend user, delete comment, or delete bulletin.
+
+The app verifies the reporting schema at startup with safe `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS` statements. Do not print, copy, or commit `/opt/bytespace/server/.env`. Do not commit backup artifacts, report exports, invite codes, database URLs, or moderation dumps.
+
 ## 12. Smoke Tests
 
 Server checks:

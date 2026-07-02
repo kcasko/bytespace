@@ -1533,6 +1533,31 @@ UPDATE users SET is_admin = true WHERE username = 'your_username';
 
 Use the production database shell, not a committed file. Do not commit `.env`, invite codes, database URLs, backup artifacts, or moderation exports.
 
+### v2.6 User Reporting and Safety Tools
+
+ByteSpace adds logged-in user reporting for profiles, comments, and bulletins. Users can submit one open report per target with a reason and optional details. Report text is rendered as normal React text, not raw HTML. Suspended users cannot submit reports because `/api/reports` uses authenticated active-account middleware.
+
+Report reasons:
+
+- `harassment`
+- `spam`
+- `inappropriate_content`
+- `impersonation`
+- `other`
+
+Report statuses:
+
+- `open`
+- `reviewed`
+- `dismissed`
+- `action_taken`
+
+Admins review reports from `/admin`, can filter by status, add an admin note while changing status, and use existing moderation actions from report context: suspend user, delete comment, or delete bulletin. Admin report routes are backend-enforced under `/api/admin/reports`.
+
+Schema addition: `content_reports`, with reporter, target type/id or username, reason, details, status, admin note, resolver, resolution timestamp, and creation timestamp. The app startup verifies this operational schema with safe `CREATE TABLE IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS` statements.
+
+Do not commit `.env`, invite codes, database URLs, backup files, report exports, or moderation data dumps. The production `.env` remains private.
+
 ## Next Pass
 
 The next pass should continue tightening social profile workflows and production operations.

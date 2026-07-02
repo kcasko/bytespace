@@ -14,6 +14,7 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import dbRoutes from './routes/dbRoutes.js';
 import friendRoutes from './routes/friendRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { sessionMiddleware } from './middleware/sessionMiddleware.js';
@@ -25,6 +26,7 @@ import {
   writeRateLimiter
 } from './middleware/securityMiddleware.js';
 import { uploadsRoot } from './middleware/uploadMiddleware.js';
+import { ensureOperationalSchema } from './db/ensureSchema.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -65,6 +67,7 @@ app.post(['/api/auth/login', '/api/auth/register'], authRateLimiter);
 app.post('/api/comments/:username', writeRateLimiter);
 app.post('/api/bulletins', writeRateLimiter);
 app.post('/api/friends/request/:username', writeRateLimiter);
+app.post('/api/reports', writeRateLimiter);
 app.post(['/api/profile/me/avatar', '/api/profile/me/background'], uploadRateLimiter);
 
 app.use('/api/admin', adminRoutes);
@@ -76,6 +79,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/db', dbRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/users', userRoutes);
 app.use(apiNotFoundHandler);
@@ -93,6 +97,16 @@ if (environment === 'production' && fs.existsSync(clientIndexPath)) {
 }
 
 app.use(errorHandler);
+
+try {
+  await ensureOperationalSchema();
+} catch (error) {
+  console.error('Failed to verify operational database schema:', {
+    code: error.code,
+    message: error.message
+  });
+  process.exit(1);
+}
 
 app.listen(port, () => {
   console.log(`ByteSpace API listening on http://localhost:${port}`);

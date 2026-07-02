@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import ReportAction from '../components/ReportAction.jsx';
 import { blockUser } from '../api/blockApi.js';
 import { getUserBulletins } from '../api/bulletinApi.js';
 import { getComments, postComment } from '../api/commentApi.js';
@@ -49,7 +50,7 @@ function ContactBox({ displayName }) {
   );
 }
 
-function Sidebar({ profile }) {
+function Sidebar({ profile, currentUser }) {
   return (
     <aside className="sidebar">
       <Box title={`${profile.displayName}'s Blurbz`} className="profile-card">
@@ -68,6 +69,17 @@ function Sidebar({ profile }) {
       </Box>
 
       <ContactBox displayName={profile.displayName} />
+
+      {currentUser?.username !== profile.username && (
+        <Box title="Safety">
+          <ReportAction
+            currentUser={currentUser}
+            targetType="profile"
+            targetUsername={profile.username}
+            label="Report Profile"
+          />
+        </Box>
+      )}
 
       <Box title="Interests">
         <dl className="interests-list">
@@ -235,6 +247,12 @@ function Comments({ comments, currentUser, profileUsername, onCommentPosted }) {
               <span>{comment.createdAt ? formatCommentDate(comment.createdAt) : comment.date}</span>
             </div>
             <p>{comment.body}</p>
+            <ReportAction
+              currentUser={currentUser}
+              targetType="comment"
+              targetId={comment.id}
+              label="Report Comment"
+            />
           </article>
         ))}
       </div>
@@ -242,7 +260,7 @@ function Comments({ comments, currentUser, profileUsername, onCommentPosted }) {
   );
 }
 
-function Bulletins({ bulletins }) {
+function Bulletins({ bulletins, currentUser }) {
   return (
     <Box title="Bulletin Board">
       {bulletins.length === 0 ? (
@@ -256,6 +274,12 @@ function Bulletins({ bulletins }) {
                 <span>{formatCommentDate(bulletin.createdAt)}</span>
               </header>
               <p>{bulletin.body}</p>
+              <ReportAction
+                currentUser={currentUser}
+                targetType="bulletin"
+                targetId={bulletin.id}
+                label="Report Bulletin"
+              />
             </article>
           ))}
         </div>
@@ -423,7 +447,7 @@ export default function ProfilePage({ currentUser }) {
       </div>
 
       <div className="layout-grid">
-        <Sidebar profile={profile} />
+        <Sidebar profile={profile} currentUser={currentUser} />
 
         <section className="profile-main" aria-label={`${profile.displayName} profile`}>
           {pageMessage && <div className="editor-success">{pageMessage}</div>}
@@ -464,7 +488,7 @@ export default function ProfilePage({ currentUser }) {
               </div>
             </Box>
           ) : (
-            <Bulletins bulletins={bulletins} />
+            <Bulletins bulletins={bulletins} currentUser={currentUser} />
           )}
         </section>
       </div>

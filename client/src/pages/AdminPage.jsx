@@ -6,8 +6,10 @@ import {
   getRecentBulletins,
   getRecentComments,
   getRecentSignups,
+  getAdminReports,
   suspendUser,
-  unsuspendUser
+  unsuspendUser,
+  updateReportStatus
 } from '../api/adminApi.js';
 
 function formatDate(value) {
@@ -20,8 +22,11 @@ export default function AdminPage({ currentUser }) {
   const [recentSignups, setRecentSignups] = useState([]);
   const [recentComments, setRecentComments] = useState([]);
   const [recentBulletins, setRecentBulletins] = useState([]);
+  const [reports, setReports] = useState([]);
   const [query, setQuery] = useState('');
   const [reason, setReason] = useState('');
+  const [reportStatusFilter, setReportStatusFilter] = useState('open');
+  const [adminNote, setAdminNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -31,17 +36,19 @@ export default function AdminPage({ currentUser }) {
     setError('');
 
     try {
-      const [usersData, signupsData, commentsData, bulletinsData] = await Promise.all([
+      const [usersData, signupsData, commentsData, bulletinsData, reportsData] = await Promise.all([
         getAdminUsers(search),
         getRecentSignups(),
         getRecentComments(),
-        getRecentBulletins()
+        getRecentBulletins(),
+        getAdminReports(reportStatusFilter)
       ]);
 
       setUsers(usersData.users || []);
       setRecentSignups(signupsData.users || []);
       setRecentComments(commentsData.comments || []);
       setRecentBulletins(bulletinsData.bulletins || []);
+      setReports(reportsData.reports || []);
     } catch (err) {
       setError(err.message || 'Admin panel unavailable.');
     } finally {
@@ -112,6 +119,21 @@ export default function AdminPage({ currentUser }) {
     }
   }
 
+
+
+  async function handleReportStatus(id, status) {
+    setError('');
+    setMessage('');
+
+    try {
+      await updateReportStatus(id, { status, adminNote });
+      setMessage(`Report marked ${status}.`);
+      await loadAdminData(query);
+    } catch (err) {
+      setError(err.message || 'Report update failed.');
+    }
+  }
+
   if (!currentUser) {
     return (
       <main className="page-shell auth-shell">
@@ -141,6 +163,65 @@ export default function AdminPage({ currentUser }) {
         <p className="auth-note">Moderation controls for keeping the glitter server upright.</p>
         {error && <div className="auth-error">{error}</div>}
         {message && <div className="auth-success">{message}</div>}
+      </section>
+
+
+
+      <section className="content-panel">
+        <h2>Reports</h2>
+        <div className="inline-form">
+          <label>
+            Status
+            <select value={reportStatusFilter} onChange={(event) => setReportStatusFilter(event.target.value)}>
+              <option value="open">Open</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="dismissed">Dismissed</option>
+              <option value="action_taken">Action taken</option>
+              <option value="">All</option>
+            </select>
+          </label>
+          <button type="button" onClick={() => loadAdminData(query)}>Refresh Reports</button>
+        </div>
+        <label>
+          Admin note
+          <textarea
+            value={adminNote}
+            onChange={(event) => setAdminNote(event.target.value)}
+            placeholder="Optional note saved when changing report status"
+            maxLength="1000"
+          />
+        </label>
+        <div className="admin-list">
+          {reports.map((report) => (
+            <article className="admin-item" key={report.id}>
+              <div>
+                <strong>#{report.id} {report.targetType}</strong> <span className="status-pill">{report.status}</span>
+                <p>Reporter: @{report.reporterUsername}</p>
+                <p>Target: {report.targetUsername ? `@${report.targetUsername}` : report.targetId}</p>
+                <p>Reason: {report.reason}</p>
+                {report.details && <p>Details: {report.details}</p>}
+                {report.targetPreview && <p>Preview: {report.targetPreview}</p>}
+                {report.adminNote && <p>Admin note: {report.adminNote}</p>}
+                <small>{formatDate(report.createdAt)}</small>
+              </div>
+              <div className="admin-actions">
+                <button type="button" onClick={() => handleReportStatus(report.id, 'reviewed')}>Reviewed</button>
+                <button type="button" onClick={() => handleReportStatus(report.id, 'dismissed')}>Dismiss</button>
+                <button type="button" onClick={() => handleReportStatus(report.id, 'action_taken')}>Action Taken</button>
+                {report.targetType === 'comment' && report.targetId && (
+                  <button type="button" onClick={() => handleDeleteComment(report.targetId)}>Delete Comment</button>
+                )}
+                {report.targetType === 'bulletin' && report.targetId && (
+                  <button type="button" onClick={() => handleDeleteBulletin(report.targetId)}>Delete Bulletin</button>
+                )}
+                {report.targetUsername && (
+                  <button type="button" onClick={() => handleSuspend(report.targetUsername)}>Suspend User</button>
+                )}
+              </div>
+            </article>
+          ))}
+          {reports.length === 0 && <p>No reports for this filter.</p>}
+        </div>
       </section>
 
       <section className="content-panel">

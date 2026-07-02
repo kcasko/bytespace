@@ -63,3 +63,16 @@ export function deleteAdminBulletin(id) {
     body: JSON.stringify({})
   });
 }
+
+
+export function getAdminReports(status = '') {
+  const params = status ? `?status=${encodeURIComponent(status)}` : '';
+  return adminFetch(`/api/admin/reports${params}`);
+}
+
+export function updateReportStatus(id, { status, adminNote = '' }) {
+  return adminFetch(`/api/admin/reports/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status, adminNote })
+  });
+}

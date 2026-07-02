@@ -98,6 +98,28 @@ CREATE TABLE IF NOT EXISTS bulletins (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
+CREATE TABLE IF NOT EXISTS content_reports (
+  id SERIAL PRIMARY KEY,
+  reporter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  target_type VARCHAR(20) NOT NULL,
+  target_id INTEGER,
+  target_username VARCHAR(40),
+  reason VARCHAR(50) NOT NULL,
+  details TEXT,
+  status VARCHAR(20) NOT NULL DEFAULT 'open',
+  admin_note TEXT,
+  resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  resolved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT content_reports_target_type_check CHECK (target_type IN ('profile', 'comment', 'bulletin')),
+  CONSTRAINT content_reports_status_check CHECK (status IN ('open', 'reviewed', 'dismissed', 'action_taken')),
+  CONSTRAINT content_reports_target_required_check CHECK (
+    (target_type = 'profile' AND target_username IS NOT NULL)
+    OR (target_type IN ('comment', 'bulletin') AND target_id IS NOT NULL)
+  )
+);
+
 CREATE TABLE IF NOT EXISTS "session" (
   sid VARCHAR NOT NULL PRIMARY KEY,
   sess JSON NOT NULL,
@@ -114,3 +136,8 @@ CREATE INDEX IF NOT EXISTS profile_comments_profile_user_id_idx ON profile_comme
 CREATE INDEX IF NOT EXISTS profile_comments_author_user_id_idx ON profile_comments(author_user_id);
 CREATE INDEX IF NOT EXISTS bulletins_user_id_idx ON bulletins(user_id);
 CREATE INDEX IF NOT EXISTS session_expire_idx ON "session"(expire);
+CREATE INDEX IF NOT EXISTS content_reports_reporter_id_idx ON content_reports(reporter_id);
+CREATE INDEX IF NOT EXISTS content_reports_status_idx ON content_reports(status);
+CREATE UNIQUE INDEX IF NOT EXISTS content_reports_open_unique_idx
+  ON content_reports (reporter_id, target_type, COALESCE(target_id, -1), COALESCE(LOWER(target_username), ''))
+  WHERE status = 'open';
