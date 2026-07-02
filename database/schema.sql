@@ -134,6 +134,24 @@ CREATE TABLE IF NOT EXISTS admin_audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  actor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  type VARCHAR(80) NOT NULL,
+  title VARCHAR(160) NOT NULL,
+  body TEXT,
+  link_url TEXT,
+  metadata_json JSONB,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS notifications_user_read_created_idx ON notifications(user_id, read_at, created_at DESC);
+CREATE INDEX IF NOT EXISTS notifications_user_created_idx ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS notifications_actor_user_id_idx ON notifications(actor_user_id);
+
 CREATE TABLE IF NOT EXISTS "session" (
   sid VARCHAR NOT NULL PRIMARY KEY,
   sess JSON NOT NULL,

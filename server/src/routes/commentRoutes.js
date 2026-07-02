@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { isBlockedBetween } from '../db/blockQueries.js';
+import { safeCreateNotification } from '../db/notificationQueries.js';
 import { createProfileComment, getCommentsForProfileUsername } from '../db/commentQueries.js';
 import {
   canCommentOnProfile,
@@ -92,6 +93,18 @@ router.post('/:username', sessionMiddleware, requireAuth, async (req, res) => {
 
     if (!comment) {
       return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    if (privacy.userId !== req.session.user.id) {
+      await safeCreateNotification({
+        userId: privacy.userId,
+        actorUserId: req.session.user.id,
+        type: 'profile_comment',
+        title: `@${req.session.user.username} signed your guestbook`,
+        body: body.slice(0, 160),
+        linkUrl: `/profile/${req.params.username}`,
+        metadata: { commentId: comment.id }
+      });
     }
 
     return res.status(201).json({ comment });

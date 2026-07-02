@@ -679,6 +679,36 @@ Deployment checks after this patch:
 - Confirm `/api/profile/keith` reflects the saved value.
 - Keep `/opt/bytespace/server/.env` private and do not copy production secrets into docs.
 
+
+## v2.9 Notifications Notes
+
+ByteSpace v2.9 adds database-backed notifications in the existing Node/PostgreSQL deployment. No new daemon, websocket service, queue, cron job, or background worker is required.
+
+Operational behavior:
+
+- The app creates the `notifications` table and indexes during startup if they are missing.
+- Notification routes live under `/api/notifications` and require authenticated active users.
+- The frontend polls the unread-count endpoint from the header while a user is logged in.
+- Notification text is plain React text and notification links are internal app paths.
+
+Notification types:
+
+- `friend_request_received`
+- `friend_request_accepted`
+- `profile_comment`
+- `friend_bulletin`
+
+Deployment verification after restart:
+
+```bash
+curl -i https://bytespace.casko.dev/api/health
+curl -i https://bytespace.casko.dev/api/db/health
+```
+
+Then verify logged-out `/api/notifications` returns `401`, Keith can load `/notifications`, unread count works, and `/admin` still loads for admin moderation, reports, and audit logs.
+
+Security reminders: keep `/opt/bytespace/server/.env` private, do not commit backups or generated dumps, and do not store secrets in notification metadata.
+
 ## 14. Rollback Plan
 
 Use git tags.

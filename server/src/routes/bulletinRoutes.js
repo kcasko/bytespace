@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createFriendBulletinNotifications } from '../db/notificationQueries.js';
 import { isBlockedBetween } from '../db/blockQueries.js';
 import {
   createBulletin,
@@ -104,6 +105,10 @@ router.post('/', sessionMiddleware, requireAuth, async (req, res) => {
 
   try {
     const bulletin = await createBulletin(req.session.user.id, validation.input);
+    await createFriendBulletinNotifications({
+      actorUserId: req.session.user.id,
+      bulletin
+    });
     return res.status(201).json({ bulletin });
   } catch (error) {
     console.error('Failed to create bulletin:', { code: error.code, message: error.message });

@@ -10,6 +10,7 @@ import EditProfilePage from './pages/EditProfilePage.jsx';
 import FriendsPage from './pages/FriendsPage.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import NotificationsPage from './pages/NotificationsPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/profile/edit" element={<EditProfilePage currentUser={currentUser} />} />
         <Route path="/settings" element={<SettingsPage currentUser={currentUser} />} />
         <Route path="/profile/:username" element={<ProfilePage currentUser={currentUser} />} />
+        <Route path="/notifications" element={<NotificationsPage currentUser={currentUser} />} />
         <Route path="/login" element={<LoginPage onAuth={setCurrentUser} />} />
         <Route path="/register" element={<RegisterPage onAuth={setCurrentUser} />} />
       </Routes>

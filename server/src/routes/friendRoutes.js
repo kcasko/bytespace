@@ -5,10 +5,12 @@ import {
   getIncomingFriendRequests,
   getOutgoingFriendRequests,
   getTopFriends,
+  getUserByUsername,
   rejectFriendRequest,
   sendFriendRequest,
   setTopFriends
 } from '../db/friendQueries.js';
+import { safeCreateNotification } from '../db/notificationQueries.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
 
@@ -56,7 +58,29 @@ router.get('/requests', async (req, res) => {
 router.post('/request/:username', async (req, res) => {
   try {
     const result = await sendFriendRequest(currentUserId(req), req.params.username);
-    return handleFriendResult(res, result, {
+
+    if (result.error) {
+      return handleFriendResult(res, result, {
+        status: 'ok',
+        message: 'Friend request sent'
+      });
+    }
+
+    const receiver = await getUserByUsername(req.params.username);
+
+    if (receiver) {
+      await safeCreateNotification({
+        userId: receiver.id,
+        actorUserId: currentUserId(req),
+        type: 'friend_request_received',
+        title: `@${req.session.user.username} sent you a friend request`,
+        body: 'Your friend list has a new applicant at the velvet rope.',
+        linkUrl: '/friends',
+        metadata: { requesterUsername: req.session.user.username }
+      });
+    }
+
+    return res.json({
       status: 'ok',
       message: 'Friend request sent'
     });
@@ -69,7 +93,29 @@ router.post('/request/:username', async (req, res) => {
 router.post('/accept/:username', async (req, res) => {
   try {
     const result = await acceptFriendRequest(currentUserId(req), req.params.username);
-    return handleFriendResult(res, result, {
+
+    if (result.error) {
+      return handleFriendResult(res, result, {
+        status: 'ok',
+        message: 'Friend request accepted'
+      });
+    }
+
+    const requester = await getUserByUsername(req.params.username);
+
+    if (requester) {
+      await safeCreateNotification({
+        userId: requester.id,
+        actorUserId: currentUserId(req),
+        type: 'friend_request_accepted',
+        title: `@${req.session.user.username} accepted your friend request`,
+        body: 'You are officially connected in the ByteSpace social machinery.',
+        linkUrl: `/profile/${req.session.user.username}`,
+        metadata: { accepterUsername: req.session.user.username }
+      });
+    }
+
+    return res.json({
       status: 'ok',
       message: 'Friend request accepted'
     });
