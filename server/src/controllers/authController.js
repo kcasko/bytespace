@@ -4,6 +4,53 @@ import { pool, query } from '../db/pool.js';
 const USERNAME_PATTERN = /^[a-z0-9_-]+$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SALT_ROUNDS = 12;
+const REGISTRATION_MODES = new Set(['open', 'disabled', 'invite']);
+
+function normalizeRegistrationMode(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveRegistrationMode(env = process.env) {
+  const allowRegistration = String(env.ALLOW_REGISTRATION || '').trim().toLowerCase();
+  const configuredMode = normalizeRegistrationMode(env.REGISTRATION_MODE);
+
+  if (allowRegistration === 'false') {
+    return 'disabled';
+  }
+
+  if (REGISTRATION_MODES.has(configuredMode)) {
+    return configuredMode;
+  }
+
+  if (allowRegistration === 'true') {
+    return 'open';
+  }
+
+  return env.NODE_ENV === 'production' ? 'disabled' : 'open';
+}
+
+export function getRegistrationGate(body = {}, env = process.env) {
+  const mode = resolveRegistrationMode(env);
+
+  if (mode === 'disabled') {
+    return { allowed: false, status: 403, error: 'Registration is currently closed.' };
+  }
+
+  if (mode === 'invite') {
+    const configuredInviteCode = String(env.INVITE_CODE || '');
+    const submittedInviteCode = String(body.inviteCode || '').trim();
+
+    if (!configuredInviteCode) {
+      return { allowed: false, status: 403, error: 'Registration is invite-only, but invites are not configured.' };
+    }
+
+    if (!submittedInviteCode || submittedInviteCode !== configuredInviteCode) {
+      return { allowed: false, status: 403, error: 'A valid invite code is required to register.' };
+    }
+  }
+
+  return { allowed: true, mode };
+}
 
 function safeUser(user) {
   return {
@@ -67,6 +114,12 @@ function setSessionUser(req, user) {
 }
 
 export async function register(req, res) {
+  const registrationGate = getRegistrationGate(req.body || {});
+
+  if (!registrationGate.allowed) {
+    return res.status(registrationGate.status).json({ error: registrationGate.error });
+  }
+
   const validation = validateRegistration(req.body || {});
 
   if (validation.error) {

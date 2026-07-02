@@ -52,6 +52,9 @@ SESSION_SECRET=replace-this-with-a-long-random-secret
 UPLOADS_DIR=uploads
 TRUST_PROXY=false
 SESSION_COOKIE_SAMESITE=lax
+REGISTRATION_MODE=invite
+ALLOW_REGISTRATION=true
+INVITE_CODE=replace-with-private-invite-code
 ```
 
 Health check:
@@ -1480,6 +1483,26 @@ s3://BYTESPACE_BACKUP_BUCKET/bytespace/YYYY-MM-DD/
 ```
 
 S3 retention should be handled with an S3 Lifecycle rule that deletes objects older than 7 days. See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for AWS CLI installation, IAM permissions, config examples, manual test commands, and verification steps.
+
+### v2.4 Invite-Only Registration
+
+ByteSpace supports three registration modes controlled by server environment variables:
+
+- `REGISTRATION_MODE=open` allows public registration.
+- `REGISTRATION_MODE=disabled` blocks new registrations with a clear `403` response.
+- `REGISTRATION_MODE=invite` requires a matching `INVITE_CODE` submitted during registration.
+
+`ALLOW_REGISTRATION=false` blocks registration for compatibility with older config and overrides `REGISTRATION_MODE`. If `REGISTRATION_MODE` is missing, development falls back to open registration, while production falls back to disabled registration so the live app is not accidentally opened.
+
+Recommended production config is invite-only or disabled:
+
+```env
+REGISTRATION_MODE=invite
+ALLOW_REGISTRATION=true
+INVITE_CODE=REDACTED_PRIVATE_INVITE_CODE
+```
+
+To change modes safely, edit the private server env file on the host, restart `bytespace.service`, and verify `/api/health`. Never commit `.env`, invite codes, database dumps, or backup archives.
 
 ## Next Pass
 

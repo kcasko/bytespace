@@ -130,6 +130,9 @@ WRITE_RATE_LIMIT_WINDOW_MS=900000
 WRITE_RATE_LIMIT_MAX=60
 UPLOAD_RATE_LIMIT_WINDOW_MS=900000
 UPLOAD_RATE_LIMIT_MAX=30
+REGISTRATION_MODE=invite
+ALLOW_REGISTRATION=true
+INVITE_CODE=REDACTED_PRIVATE_INVITE_CODE
 ```
 
 Notes:
@@ -145,6 +148,32 @@ Generate a session secret:
 ```bash
 openssl rand -base64 48
 ```
+
+### Registration Mode
+
+ByteSpace registration is controlled by private server environment variables:
+
+- `REGISTRATION_MODE=open` keeps public registration open.
+- `REGISTRATION_MODE=disabled` blocks registration.
+- `REGISTRATION_MODE=invite` requires a matching `INVITE_CODE`.
+- `ALLOW_REGISTRATION=false` blocks registration for compatibility with older config.
+
+Production should use `REGISTRATION_MODE=invite` or `REGISTRATION_MODE=disabled`. If `REGISTRATION_MODE` is missing, production defaults to disabled registration; development defaults to open registration. The actual `INVITE_CODE` must stay only in `/opt/bytespace/server/.env` or another private environment source and must never be printed, committed, or copied into docs.
+
+Example production config with the secret redacted:
+
+```env
+REGISTRATION_MODE=invite
+ALLOW_REGISTRATION=true
+INVITE_CODE=REDACTED_PRIVATE_INVITE_CODE
+```
+
+To change modes safely:
+
+1. Edit `/opt/bytespace/server/.env` on the server.
+2. Restart `bytespace.service`.
+3. Verify `curl http://127.0.0.1:5000/api/health`.
+4. Test registration behavior without exposing the invite code.
 
 ## 6. Build Client
 

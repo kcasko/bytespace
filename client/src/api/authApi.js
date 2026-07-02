@@ -19,10 +19,10 @@ async function authFetch(path, options = {}) {
   return data;
 }
 
-export async function register({ username, email, password }) {
+export async function register({ username, email, password, inviteCode }) {
   return authFetch('/api/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ username, email, password })
+    body: JSON.stringify({ username, email, password, inviteCode })
   });
 }
 

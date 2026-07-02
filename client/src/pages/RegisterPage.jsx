@@ -4,9 +4,11 @@ import { register } from '../api/authApi.js';
 
 export default function RegisterPage({ onAuth }) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', email: '', password: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '', inviteCode: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showInviteCode, setShowInviteCode] = useState(false);
+  const registrationClosed = error.toLowerCase().includes('registration is currently closed');
 
   function updateField(event) {
     setForm((current) => ({
@@ -25,7 +27,11 @@ export default function RegisterPage({ onAuth }) {
       onAuth(data.user);
       navigate(`/profile/${data.user.username}`);
     } catch (err) {
-      setError(err.message);
+      const message = err.message || 'Registration failed.';
+      if (message.toLowerCase().includes('invite')) {
+        setShowInviteCode(true);
+      }
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -36,6 +42,9 @@ export default function RegisterPage({ onAuth }) {
       <section className="auth-panel">
         <h1>Register</h1>
         <p className="auth-note">Claim a corner of the loud internet.</p>
+        {registrationClosed && (
+          <p className="auth-note">New page creation is closed right now. Existing users can still log in.</p>
+        )}
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <label>
@@ -67,7 +76,19 @@ export default function RegisterPage({ onAuth }) {
               autoComplete="new-password"
             />
           </label>
-          <button type="submit" disabled={submitting}>
+          {showInviteCode && (
+            <label>
+              Invite Code
+              <input
+                name="inviteCode"
+                type="password"
+                value={form.inviteCode}
+                onChange={updateField}
+                autoComplete="off"
+              />
+            </label>
+          )}
+          <button type="submit" disabled={submitting || registrationClosed}>
             {submitting ? 'Registering...' : 'Register'}
           </button>
         </form>
