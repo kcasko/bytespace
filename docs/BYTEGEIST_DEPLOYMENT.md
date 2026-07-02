@@ -415,6 +415,111 @@ tar -czf "bytespace-uploads-$(date +%Y%m%d-%H%M%S).tar.gz" /opt/bytespace/server
 
 Store backups somewhere other than the same disk if this becomes important.
 
+
+### Optional S3 Offsite Backups
+
+ByteSpace has a backup helper at:
+
+```bash
+/opt/bytespace/scripts/bytespace-backup.sh
+```
+
+It creates local backups in `/opt/bytespace-backups` and keeps 7 days of local backup files by default. Local backups work without AWS configured.
+
+The script creates and optionally uploads:
+
+- PostgreSQL `.sql` backup
+- uploads `.tar.gz` backup
+
+Expected S3 layout when enabled:
+
+```text
+s3://BYTESPACE_BACKUP_BUCKET/bytespace/YYYY-MM-DD/
+```
+
+Install AWS CLI if S3 upload will be used:
+
+```bash
+sudo apt update
+sudo apt install -y awscli
+aws --version
+```
+
+Create a private config file outside the repo:
+
+```bash
+sudo mkdir -p /etc/bytespace
+sudo install -m 600 /dev/null /etc/bytespace/backup.env
+```
+
+Example `/etc/bytespace/backup.env` template, with placeholders only:
+
+```bash
+BYTESPACE_S3_ENABLED=true
+BYTESPACE_BACKUP_BUCKET=replace-with-bucket-name
+BYTESPACE_S3_PREFIX=bytespace
+BYTESPACE_BACKUP_DIR=/opt/bytespace-backups
+BYTESPACE_RETENTION_DAYS=7
+# Optional if local pg_dump cannot connect by database name:
+# BYTESPACE_DATABASE_URL=postgres://bytespace_user:REPLACE_WITH_PASSWORD@localhost:5432/bytespace
+# Optional if uploads move later:
+# BYTESPACE_UPLOADS_DIR=/opt/bytespace/server/uploads
+```
+
+Do not put real AWS credentials, database passwords, or production `.env` values in git or docs. AWS credentials should live in one of these root-owned locations:
+
+- `/root/.aws/credentials` and `/root/.aws/config`
+- `/etc/bytespace/backup.env` as environment variables for a root-run backup job
+- a managed instance role or equivalent provider identity, if available later
+
+Minimum IAM permissions should be scoped to the backup bucket and prefix:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:ListBucket"],
+      "Resource": [
+        "arn:aws:s3:::YOUR_BUCKET_NAME",
+        "arn:aws:s3:::YOUR_BUCKET_NAME/bytespace/*"
+      ]
+    }
+  ]
+}
+```
+
+Manual local backup test, without S3:
+
+```bash
+cd /opt/bytespace
+sudo BYTESPACE_S3_ENABLED=false ./scripts/bytespace-backup.sh
+ls -lah /opt/bytespace-backups
+```
+
+Manual S3 upload test after AWS CLI and credentials are configured:
+
+```bash
+cd /opt/bytespace
+sudo ./scripts/bytespace-backup.sh
+sudo sh -c '. /etc/bytespace/backup.env && aws s3 ls "s3://$BYTESPACE_BACKUP_BUCKET/bytespace/$(date -u +%F)/"'
+```
+
+Verify S3 backups by confirming both objects exist for today:
+
+```bash
+sudo sh -c '. /etc/bytespace/backup.env && aws s3 ls "s3://$BYTESPACE_BACKUP_BUCKET/bytespace/$(date -u +%F)/"'
+```
+
+Disable S3 upload by setting this in `/etc/bytespace/backup.env` or by omitting the file entirely:
+
+```bash
+BYTESPACE_S3_ENABLED=false
+```
+
+S3 retention should be handled by an S3 Lifecycle rule deleting `bytespace/` objects older than 7 days. The script only enforces 7-day local retention in `/opt/bytespace-backups`.
+
 ## 14. Rollback Plan
 
 Use git tags.

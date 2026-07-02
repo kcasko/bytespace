@@ -1466,6 +1466,21 @@ The live production env file is `/opt/bytespace/server/.env`. It must remain pri
 
 See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for the live deployment state, NPM 504 root cause, UFW rule, health checks, backup notes, and update/rollback commands.
 
+
+### Optional S3 Offsite Backups
+
+ByteSpace includes `scripts/bytespace-backup.sh` for local PostgreSQL and uploads backups under `/opt/bytespace-backups`. Local backup retention is 7 days by default.
+
+S3 upload is optional and configured outside the repo with `/etc/bytespace/backup.env` or exported environment variables. Do not commit AWS credentials, bucket names for private deployments, database dumps, upload archives, or generated backup files.
+
+When enabled, the script uploads both backup artifacts to:
+
+```text
+s3://BYTESPACE_BACKUP_BUCKET/bytespace/YYYY-MM-DD/
+```
+
+S3 retention should be handled with an S3 Lifecycle rule that deletes objects older than 7 days. See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for AWS CLI installation, IAM permissions, config examples, manual test commands, and verification steps.
+
 ## Next Pass
 
-The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.
+The next pass should continue tightening social profile workflows and production operations.
