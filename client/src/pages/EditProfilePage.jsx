@@ -1,23 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getMyProfile, updateMyProfile, uploadAvatar, uploadBackground } from '../api/profileApi.js';
+import { detectMusicService, getSafeYouTubeEmbedUrl, getSongSummary, isHttpUrl } from '../utils/musicUtils.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 function toAssetUrl(url) {
   if (!url) return '';
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
-}
-
-function isHttpUrl(url) {
-  if (!url) return false;
-
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
 }
 
 const fontOptions = [
@@ -493,7 +483,7 @@ export default function EditProfilePage({ currentUser }) {
 
           <fieldset>
             <legend>Profile Song</legend>
-            <p className="editor-helper">Paste a normal http/https link only. No uploads yet, because copyright lawyers are allergic to fun.</p>
+            <p className="editor-helper">Paste a YouTube, Spotify, SoundCloud, Bandcamp, Apple Music, or music link. No uploads or autoplay. Keep it chill.</p>
             <TextInput label="Song Title" name="profileSongTitle" value={profile.profileSongTitle} onChange={updateField} />
             <TextInput label="Artist" name="profileSongArtist" value={profile.profileSongArtist} onChange={updateField} />
             <TextInput label="Song URL" name="profileSongUrl" value={profile.profileSongUrl} onChange={updateField} />
@@ -604,12 +594,25 @@ export default function EditProfilePage({ currentUser }) {
             <div className="profile-preview-box profile-song-preview" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               <strong>Now Playing</strong>
               <p>
-                {profile.profileSongTitle || profile.profileSongArtist
-                  ? `${profile.profileSongTitle || 'Untitled'} by ${profile.profileSongArtist || 'Unknown Artist'}`
-                  : 'No profile song set. Suspiciously quiet.'}
+                {profile.profileSongTitle || profile.profileSongArtist || profile.profileSongUrl
+                  ? getSongSummary(profile)
+                  : 'No profile song yet. The jukebox is dusty.'}
               </p>
+              <span className="music-service-label">{detectMusicService(profile.profileSongUrl)}</span>
               {isHttpUrl(profile.profileSongUrl) && (
-                <a href={profile.profileSongUrl} target="_blank" rel="noreferrer">Open song link</a>
+                <a href={profile.profileSongUrl} target="_blank" rel="noopener noreferrer">Open music link</a>
+              )}
+              {getSafeYouTubeEmbedUrl(profile.profileSongUrl) && (
+                <div className="youtube-preview-frame youtube-preview-frame--small">
+                  <iframe
+                    src={getSafeYouTubeEmbedUrl(profile.profileSongUrl)}
+                    title={`YouTube preview for ${getSongSummary(profile)}`}
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
               )}
             </div>
             <div className="profile-preview-box" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>

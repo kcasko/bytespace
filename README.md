@@ -1636,6 +1636,30 @@ Schema addition: `notifications`, with recipient user, optional actor user, type
 
 Frontend additions: a header unread-count badge and `/notifications` page with unread/read states, mark-read, and mark-all-read controls.
 
+
+### v3.0 Profile Music Polish
+
+ByteSpace keeps profile music nostalgic without hosting audio. Users can save plain-text song metadata and a normal external music link:
+
+- `profile_song_title`
+- `profile_song_artist`
+- `profile_song_url`
+
+The public profile **Now Playing** box now shows title, artist, detected service, and a safe external music link. The editor preview shows the same summary before saving.
+
+Supported display-only service detection:
+
+- YouTube
+- Spotify
+- SoundCloud
+- Bandcamp
+- Apple Music
+- Other link
+
+URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must be valid `http://` or `https://` links, must stay within the 500 character limit, and must not include credentials or unsupported schemes such as `javascript:`, `data:`, `file:`, or `vbscript:`.
+
+Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
+
 ## Next Pass
 
 The next pass should continue tightening social profile workflows and production operations.

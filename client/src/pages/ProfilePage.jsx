@@ -5,6 +5,7 @@ import { blockUser } from '../api/blockApi.js';
 import { getUserBulletins } from '../api/bulletinApi.js';
 import { getComments, postComment } from '../api/commentApi.js';
 import { getProfile } from '../api/profileApi.js';
+import { detectMusicService, getSafeYouTubeEmbedUrl, getSongSummary, isHttpUrl } from '../utils/musicUtils.js';
 
 const fallbackProfileImage =
   'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=500&q=80';
@@ -14,17 +15,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ?
 function toAssetUrl(url) {
   if (!url) return '';
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
-}
-
-function isHttpUrl(url) {
-  if (!url) return false;
-
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
 }
 
 function Box({ title, children, className = '' }) {
@@ -181,13 +171,12 @@ function TopFriends({ friends }) {
 }
 
 function ProfileSong({ profile }) {
-  const hasSong = profile.profileSongTitle || profile.profileSongArtist;
-  const songText = hasSong
-    ? `${profile.profileSongTitle || 'Untitled'} by ${profile.profileSongArtist || 'Unknown Artist'}`
-    : 'No profile song set. Suspiciously quiet.';
+  const hasSong = profile.profileSongTitle || profile.profileSongArtist || profile.profileSongUrl;
+  const serviceLabel = detectMusicService(profile.profileSongUrl);
+  const embedUrl = getSafeYouTubeEmbedUrl(profile.profileSongUrl);
 
   return (
-    <Box title={`${profile.displayName}'s Profile Song`} className="profile-song-box">
+    <Box title="Now Playing" className="profile-song-box profile-song-box--polished">
       <div className="now-playing-widget">
         <div className="equalizer-bars" aria-hidden="true">
           <span />
@@ -195,14 +184,36 @@ function ProfileSong({ profile }) {
           <span />
           <span />
         </div>
-        <div>
-          <strong>Now Playing:</strong>
-          <p>{songText}</p>
-          {isHttpUrl(profile.profileSongUrl) && (
-            <a href={profile.profileSongUrl} target="_blank" rel="noreferrer">Open song link</a>
+        <div className="now-playing-details">
+          {hasSong ? (
+            <>
+              <p className="now-playing-label">Profile Song</p>
+              <strong>{profile.profileSongTitle || 'Untitled'}</strong>
+              <span>{profile.profileSongArtist || 'Unknown Artist'}</span>
+              <span className="music-service-label">{serviceLabel}</span>
+              {isHttpUrl(profile.profileSongUrl) && (
+                <a href={profile.profileSongUrl} target="_blank" rel="noopener noreferrer">
+                  Add to your imaginary 2006 playlist
+                </a>
+              )}
+            </>
+          ) : (
+            <p>No profile song yet. The jukebox is dusty.</p>
           )}
         </div>
       </div>
+      {embedUrl && (
+        <div className="youtube-preview-frame">
+          <iframe
+            src={embedUrl}
+            title={`YouTube preview for ${getSongSummary(profile)}`}
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
+      )}
     </Box>
   );
 }

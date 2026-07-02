@@ -52,7 +52,7 @@ export async function getDashboardForUser(userId) {
     ),
     query(
       `
-        SELECT display_name, headline, mood, status_message, profile_image_url, background_image_url
+        SELECT display_name, headline, mood, status_message, profile_image_url, background_image_url, profile_song_title, profile_song_artist, profile_song_url
         FROM profiles
         WHERE user_id = $1
         LIMIT 1
@@ -234,7 +234,10 @@ export async function getDashboardForUser(userId) {
       mood: profile.mood || '',
       statusMessage: profile.status_message || '',
       profileImageUrl: profile.profile_image_url || '',
-      backgroundImageUrl: profile.background_image_url || ''
+      backgroundImageUrl: profile.background_image_url || '',
+      profileSongTitle: profile.profile_song_title || '',
+      profileSongArtist: profile.profile_song_artist || '',
+      profileSongUrl: profile.profile_song_url || ''
     },
     counts: {
       friends: counts.friends || 0,

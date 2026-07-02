@@ -709,6 +709,29 @@ Then verify logged-out `/api/notifications` returns `401`, Keith can load `/noti
 
 Security reminders: keep `/opt/bytespace/server/.env` private, do not commit backups or generated dumps, and do not store secrets in notification metadata.
 
+
+## v3.0 Profile Music Notes
+
+ByteSpace v3.0 improves the existing profile song feature without adding uploads, autoplay, external API keys, or server-side URL fetching.
+
+Behavior:
+
+- Profile song fields remain `profile_song_title`, `profile_song_artist`, and `profile_song_url`.
+- The profile page and editor preview detect common music services for display only.
+- Safe YouTube previews use a controlled `youtube-nocookie.com` iframe generated from known YouTube URL formats.
+- Non-YouTube music links render as normal external links with `noopener noreferrer`.
+- Raw HTML embeds, arbitrary iframe code, and script URLs are not accepted.
+
+Validation:
+
+- Empty URL is allowed.
+- Non-empty URL must be valid `http://` or `https://`.
+- URL max remains 500 characters.
+- Credentials in music URLs are rejected.
+- Unsupported schemes such as `javascript:`, `data:`, `file:`, and `vbscript:` are rejected.
+
+Security reminders: keep `/opt/bytespace/server/.env` private, do not add music file uploads, do not host copyrighted audio, and do not store secrets in profile music fields.
+
 ## 14. Rollback Plan
 
 Use git tags.

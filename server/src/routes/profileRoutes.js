@@ -56,6 +56,35 @@ function trimString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+
+function validateProfileSongUrl(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (value.length > textFieldLimits.profileSongUrl) {
+    return 'profileSongUrl must be 500 characters or less.';
+  }
+
+  let parsedUrl;
+
+  try {
+    parsedUrl = new URL(value);
+  } catch {
+    return 'profileSongUrl must be a valid http:// or https:// URL.';
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    return 'profileSongUrl must use http:// or https://.';
+  }
+
+  if (!parsedUrl.hostname || parsedUrl.username || parsedUrl.password) {
+    return 'profileSongUrl must be a normal http:// or https:// link.';
+  }
+
+  return null;
+}
+
 function validateProfileInput(body) {
   const input = {};
 
@@ -69,18 +98,10 @@ function validateProfileInput(body) {
     input[field] = value;
   }
 
-  if (input.profileSongUrl) {
-    let parsedUrl;
+  const profileSongUrlError = validateProfileSongUrl(input.profileSongUrl);
 
-    try {
-      parsedUrl = new URL(input.profileSongUrl);
-    } catch {
-      return { error: 'profileSongUrl must be a valid http:// or https:// URL.' };
-    }
-
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      return { error: 'profileSongUrl must use http:// or https://.' };
-    }
+  if (profileSongUrlError) {
+    return { error: profileSongUrlError };
   }
 
   for (const field of colorFields) {

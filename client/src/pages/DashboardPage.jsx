@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getMyDashboard } from '../api/dashboardApi.js';
+import { detectMusicService, getSongSummary, isHttpUrl } from '../utils/musicUtils.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
@@ -119,6 +120,12 @@ export default function DashboardPage({ currentUser }) {
               {profile.headline && <p className="dashboard-headline">{profile.headline}</p>}
               <p><b>Mood:</b> {profile.mood || 'mysteriously blank'}</p>
               <p><b>Status:</b> {profile.statusMessage || 'No status posted yet.'}</p>
+              {(profile.profileSongTitle || profile.profileSongArtist || profile.profileSongUrl) && (
+                <p className="dashboard-song-summary">
+                  <b>Now Playing:</b> {getSongSummary(profile)} ({detectMusicService(profile.profileSongUrl)})
+                  {isHttpUrl(profile.profileSongUrl) && ' - link set'}
+                </p>
+              )}
               <div className="dashboard-actions">
                 <Link to={`/profile/${dashboard.user.username}`}>View My Profile</Link>
                 <Link to="/profile/edit">Edit Profile</Link>
