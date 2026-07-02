@@ -47,6 +47,7 @@ const colorFields = [
 ];
 
 const optionFields = {
+  layoutPreset: ['classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight'],
   themeBackgroundRepeat: ['repeat', 'no-repeat', 'repeat-x', 'repeat-y'],
   themeBackgroundSize: ['auto', 'cover', 'contain'],
   themeBackgroundPosition: ['center', 'top', 'bottom', 'left', 'right']

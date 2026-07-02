@@ -22,6 +22,7 @@ ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS theme_background_size VARCHAR(20) NOT NULL DEFAULT 'auto',
   ADD COLUMN IF NOT EXISTS theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center',
   ADD COLUMN IF NOT EXISTS status_message TEXT,
+  ADD COLUMN IF NOT EXISTS layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic',
   ADD COLUMN IF NOT EXISTS profile_song_title VARCHAR(120),
   ADD COLUMN IF NOT EXISTS profile_song_artist VARCHAR(120),
   ADD COLUMN IF NOT EXISTS profile_song_url VARCHAR(500),
@@ -37,7 +38,11 @@ SET theme_background_repeat = COALESCE(NULLIF(theme_background_repeat, ''), 'rep
     profile_visibility = COALESCE(NULLIF(profile_visibility, ''), 'public'),
     comment_permission = COALESCE(NULLIF(comment_permission, ''), 'everyone'),
     bulletin_visibility = COALESCE(NULLIF(bulletin_visibility, ''), 'public'),
-    friend_request_permission = COALESCE(NULLIF(friend_request_permission, ''), 'everyone');
+    friend_request_permission = COALESCE(NULLIF(friend_request_permission, ''), 'everyone'),
+    layout_preset = CASE
+      WHEN layout_preset IN ('classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight') THEN layout_preset
+      ELSE 'classic'
+    END;
 
 CREATE TABLE IF NOT EXISTS blocked_users (
   id SERIAL PRIMARY KEY,

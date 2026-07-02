@@ -120,6 +120,7 @@ export default function DashboardPage({ currentUser }) {
               {profile.headline && <p className="dashboard-headline">{profile.headline}</p>}
               <p><b>Mood:</b> {profile.mood || 'mysteriously blank'}</p>
               <p><b>Status:</b> {profile.statusMessage || 'No status posted yet.'}</p>
+              <p><b>Layout:</b> {(profile.layoutPreset || 'classic').replace(/_/g, ' ')}</p>
               {(profile.profileSongTitle || profile.profileSongArtist || profile.profileSongUrl) && (
                 <p className="dashboard-song-summary">
                   <b>Now Playing:</b> {getSongSummary(profile)} ({detectMusicService(profile.profileSongUrl)})

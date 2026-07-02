@@ -1682,6 +1682,23 @@ URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must 
 Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
 
 
+### v3.2 Profile Layout Customization
+
+ByteSpace v3.2 adds safe profile layout presets. Users choose a structure from `/profile/edit`; the value is stored in `profiles.layout_preset` and applied on public profiles as a CSS class. There is no raw HTML, raw CSS, JavaScript injection, draggable editor, or user-provided style string.
+
+Supported layout presets:
+
+- `classic` - current/default ByteSpace layout
+- `compact` - tighter spacing for short profiles
+- `wide` - wider main content area
+- `sidebar_left` - profile info on the left, content on the right
+- `sidebar_right` - content on the left, profile info on the right
+- `spotlight` - larger hero/status/music emphasis
+
+All presets stack to a single-column layout on mobile so profile music embeds, stats, comments, bulletins, reports, badges, and notification links remain usable. Invalid layout values are rejected server-side. Missing layout values fall back to `classic`.
+
+Schema addition: `profiles.layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic'`. Startup keeps the column present with safe `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. Do not print or commit `/opt/bytespace/server/.env`, `/etc/bytespace/backup.env`, AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
+
 ### v3.1.2 Active S3 Backup Documentation
 
 ByteSpace v3.1.2 documents that production offsite S3 backups are active and tested. Local backups continue to live in `/opt/bytespace-backups` with 7-day retention, while S3 backups use the `bytespace/YYYY-MM-DD/` prefix in `bytespace-backups-keith-2026` and rely on an S3 Lifecycle rule for remote 7-day retention.

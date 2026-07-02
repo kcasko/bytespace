@@ -1,5 +1,31 @@
 import { query } from './pool.js';
 
+let layoutPresetColumnAvailable = null;
+
+async function hasLayoutPresetColumn() {
+  if (layoutPresetColumnAvailable !== null) {
+    return layoutPresetColumnAvailable;
+  }
+
+  const result = await query(
+    `
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'profiles'
+        AND column_name = 'layout_preset'
+      LIMIT 1
+    `
+  );
+
+  layoutPresetColumnAvailable = result.rowCount > 0;
+  return layoutPresetColumnAvailable;
+}
+
+function layoutPresetSelect(hasColumn) {
+  return hasColumn ? 'layout_preset' : `'classic' AS layout_preset`;
+}
+
 function mapRequestRow(row) {
   return {
     id: row.id,
@@ -33,6 +59,7 @@ function mapCommentRow(row) {
 }
 
 export async function getDashboardForUser(userId) {
+  const hasLayoutPreset = await hasLayoutPresetColumn();
   const [
     userResult,
     profileResult,
@@ -52,7 +79,7 @@ export async function getDashboardForUser(userId) {
     ),
     query(
       `
-        SELECT display_name, headline, mood, status_message, profile_image_url, background_image_url, profile_song_title, profile_song_artist, profile_song_url
+        SELECT display_name, headline, mood, status_message, ${layoutPresetSelect(hasLayoutPreset)}, profile_image_url, background_image_url, profile_song_title, profile_song_artist, profile_song_url
         FROM profiles
         WHERE user_id = $1
         LIMIT 1
@@ -233,6 +260,7 @@ export async function getDashboardForUser(userId) {
       headline: profile.headline || '',
       mood: profile.mood || '',
       statusMessage: profile.status_message || '',
+      layoutPreset: profile.layout_preset || 'classic',
       profileImageUrl: profile.profile_image_url || '',
       backgroundImageUrl: profile.background_image_url || '',
       profileSongTitle: profile.profile_song_title || '',

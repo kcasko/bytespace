@@ -20,14 +20,37 @@ export async function ensureOperationalSchema() {
   try {
     await query(`
       ALTER TABLE profiles
-        ADD COLUMN IF NOT EXISTS status_message TEXT
+        ADD COLUMN IF NOT EXISTS status_message TEXT,
+        ADD COLUMN IF NOT EXISTS layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic'
+    `);
+
+    await query(`
+      UPDATE profiles
+      SET layout_preset = 'classic'
+      WHERE layout_preset IS NULL
+         OR layout_preset NOT IN ('classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight')
+    `);
+
+    await query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conname = 'profiles_layout_preset_check'
+        ) THEN
+          ALTER TABLE profiles
+            ADD CONSTRAINT profiles_layout_preset_check
+            CHECK (layout_preset IN ('classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight'));
+        END IF;
+      END $$;
     `);
   } catch (error) {
     if (error.code !== '42501') {
       throw error;
     }
 
-    console.warn('Skipping profiles status-message migration because the app database user is not the table owner.');
+    console.warn('Skipping profiles status/layout migration because the app database user is not the table owner.');
   }
 
 

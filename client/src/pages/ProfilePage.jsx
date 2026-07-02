@@ -12,6 +12,13 @@ const fallbackProfileImage =
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
+const layoutClassNames = new Set(['classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight']);
+
+function getLayoutClassName(layoutPreset) {
+  const preset = layoutClassNames.has(layoutPreset) ? layoutPreset : 'classic';
+  return `profile-layout profile-layout--${preset}`;
+}
+
 function toAssetUrl(url) {
   if (!url) return '';
   return url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
@@ -505,7 +512,7 @@ export default function ProfilePage({ currentUser }) {
         <marquee>BYTE ALERT: {profile.displayName} says {profile.statusMessage || profile.mood || 'the profile signal is alive'}.</marquee>
       </div>
 
-      <div className="layout-grid">
+      <div className={`layout-grid ${getLayoutClassName(profile.layoutPreset)}`}>
         <Sidebar profile={profile} currentUser={currentUser} />
 
         <section className="profile-main" aria-label={`${profile.displayName} profile`}>

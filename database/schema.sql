@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   headline VARCHAR(255),
   mood VARCHAR(120),
   status_message TEXT,
+  layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic',
   about_me TEXT,
   who_id_like_to_meet TEXT,
   general_interests TEXT,
@@ -46,7 +47,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   CONSTRAINT profiles_profile_visibility_check CHECK (profile_visibility IN ('public', 'friends', 'private')),
   CONSTRAINT profiles_comment_permission_check CHECK (comment_permission IN ('everyone', 'friends', 'none')),
   CONSTRAINT profiles_bulletin_visibility_check CHECK (bulletin_visibility IN ('public', 'friends', 'private')),
-  CONSTRAINT profiles_friend_request_permission_check CHECK (friend_request_permission IN ('everyone', 'friends_of_friends', 'none'))
+  CONSTRAINT profiles_friend_request_permission_check CHECK (friend_request_permission IN ('everyone', 'friends_of_friends', 'none')),
+  CONSTRAINT profiles_layout_preset_check CHECK (layout_preset IN ('classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight'))
 );
 
 CREATE TABLE IF NOT EXISTS friendships (

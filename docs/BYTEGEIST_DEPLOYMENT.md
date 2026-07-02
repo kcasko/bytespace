@@ -718,6 +718,32 @@ Validation:
 Security reminders: keep `/opt/bytespace/server/.env` private, do not add music file uploads, do not host copyrighted audio, and do not store secrets in profile music fields.
 
 
+## v3.2 Profile Layout Customization Notes
+
+ByteSpace v3.2 adds preset-only profile layout customization. It changes the app schema and frontend CSS, but does not change Nginx Proxy Manager, UFW, PostgreSQL credentials, backups, invite-only registration, admin permissions, reports, audit logs, or notifications.
+
+Schema field:
+
+```sql
+profiles.layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic'
+```
+
+Supported values are `classic`, `compact`, `wide`, `sidebar_left`, `sidebar_right`, and `spotlight`. Runtime startup adds the column with `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` for existing deployments. Public profiles apply the preset as a controlled CSS class; users never provide raw CSS, HTML, JavaScript, or embeds.
+
+Mobile behavior: all presets collapse to a safe single-column layout under the existing mobile breakpoints. Sidebars stack, text wraps, and YouTube music previews remain responsive.
+
+Deployment verification remains:
+
+```bash
+cd /opt/bytespace
+npm run build
+sudo systemctl restart bytespace
+curl -i https://bytespace.casko.dev/api/health
+curl -i https://bytespace.casko.dev/api/db/health
+```
+
+Safety reminders: do not print, copy, edit, or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`. Do not commit AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
+
 ## v3.1 Mobile Polish Notes
 
 ByteSpace v3.1 is a frontend responsive-layout pass. It does not require database changes, environment changes, new services, or reverse proxy changes.

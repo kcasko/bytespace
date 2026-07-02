@@ -38,6 +38,32 @@ function buildProfileBadges(row) {
   };
 }
 
+let layoutPresetColumnAvailable = null;
+
+async function hasLayoutPresetColumn() {
+  if (layoutPresetColumnAvailable !== null) {
+    return layoutPresetColumnAvailable;
+  }
+
+  const result = await query(
+    `
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'profiles'
+        AND column_name = 'layout_preset'
+      LIMIT 1
+    `
+  );
+
+  layoutPresetColumnAvailable = result.rowCount > 0;
+  return layoutPresetColumnAvailable;
+}
+
+function layoutPresetSelect(hasColumn) {
+  return hasColumn ? 'profiles.layout_preset' : `'classic' AS layout_preset`;
+}
+
 function mapProfileRow(row) {
   return {
     userId: row.user_id,
@@ -46,6 +72,7 @@ function mapProfileRow(row) {
     headline: row.headline || '',
     mood: row.mood || '',
     statusMessage: row.status_message || '',
+    layoutPreset: row.layout_preset || 'classic',
     lastLogin: '06/30/2006 11:48 PM',
     online: true,
     joinedAt: row.user_created_at || null,
@@ -85,6 +112,7 @@ function mapEditableProfileRow(row) {
     headline: row.headline || '',
     mood: row.mood || '',
     statusMessage: row.status_message || '',
+    layoutPreset: row.layout_preset || 'classic',
     aboutMe: row.about_me || '',
     whoIdLikeToMeet: row.who_id_like_to_meet || '',
     generalInterests: row.general_interests || '',
@@ -113,6 +141,7 @@ function mapEditableProfileRow(row) {
 }
 
 export async function getOwnProfileByUserId(userId) {
+  const hasLayoutPreset = await hasLayoutPresetColumn();
   const result = await query(
     `
       SELECT
@@ -120,6 +149,7 @@ export async function getOwnProfileByUserId(userId) {
         profiles.headline,
         profiles.mood,
         profiles.status_message,
+        ${layoutPresetSelect(hasLayoutPreset)},
         profiles.about_me,
         profiles.who_id_like_to_meet,
         profiles.general_interests,
@@ -158,6 +188,38 @@ export async function getOwnProfileByUserId(userId) {
 }
 
 export async function updateOwnProfile(userId, profileInput) {
+  const hasLayoutPreset = await hasLayoutPresetColumn();
+  const layoutUpdate = hasLayoutPreset ? 'layout_preset = $6,' : '';
+  const layoutReturn = hasLayoutPreset ? 'layout_preset,' : `'classic' AS layout_preset,`;
+  const values = [
+    userId,
+    profileInput.displayName,
+    profileInput.headline,
+    profileInput.mood,
+    profileInput.statusMessage,
+    ...(hasLayoutPreset ? [profileInput.layoutPreset || 'classic'] : []),
+    profileInput.aboutMe,
+    profileInput.whoIdLikeToMeet,
+    profileInput.generalInterests,
+    profileInput.music,
+    profileInput.movies,
+    profileInput.games,
+    profileInput.themeBackgroundColor,
+    profileInput.themeTextColor,
+    profileInput.themeBoxColor,
+    profileInput.themeBorderColor,
+    profileInput.themeHeaderColor,
+    profileInput.themeFontFamily,
+    profileInput.themeBackgroundRepeat,
+    profileInput.themeBackgroundSize,
+    profileInput.themeBackgroundPosition,
+    profileInput.profileSongTitle,
+    profileInput.profileSongArtist,
+    profileInput.profileSongUrl
+  ];
+  const offset = hasLayoutPreset ? 0 : -1;
+  const param = (index) => `$${index + offset}`;
+
   const result = await query(
     `
       UPDATE profiles
@@ -166,24 +228,25 @@ export async function updateOwnProfile(userId, profileInput) {
         headline = $3,
         mood = $4,
         status_message = $5,
-        about_me = $6,
-        who_id_like_to_meet = $7,
-        general_interests = $8,
-        music = $9,
-        movies = $10,
-        games = $11,
-        theme_background_color = $12,
-        theme_text_color = $13,
-        theme_box_color = $14,
-        theme_border_color = $15,
-        theme_header_color = $16,
-        theme_font_family = $17,
-        theme_background_repeat = $18,
-        theme_background_size = $19,
-        theme_background_position = $20,
-        profile_song_title = $21,
-        profile_song_artist = $22,
-        profile_song_url = $23,
+        ${layoutUpdate}
+        about_me = ${param(7)},
+        who_id_like_to_meet = ${param(8)},
+        general_interests = ${param(9)},
+        music = ${param(10)},
+        movies = ${param(11)},
+        games = ${param(12)},
+        theme_background_color = ${param(13)},
+        theme_text_color = ${param(14)},
+        theme_box_color = ${param(15)},
+        theme_border_color = ${param(16)},
+        theme_header_color = ${param(17)},
+        theme_font_family = ${param(18)},
+        theme_background_repeat = ${param(19)},
+        theme_background_size = ${param(20)},
+        theme_background_position = ${param(21)},
+        profile_song_title = ${param(22)},
+        profile_song_artist = ${param(23)},
+        profile_song_url = ${param(24)},
         updated_at = NOW()
       WHERE user_id = $1
       RETURNING
@@ -191,6 +254,7 @@ export async function updateOwnProfile(userId, profileInput) {
         headline,
         mood,
         status_message,
+        ${layoutReturn}
         about_me,
         who_id_like_to_meet,
         general_interests,
@@ -210,31 +274,7 @@ export async function updateOwnProfile(userId, profileInput) {
         theme_background_size,
         theme_background_position
     `,
-    [
-      userId,
-      profileInput.displayName,
-      profileInput.headline,
-      profileInput.mood,
-      profileInput.statusMessage,
-      profileInput.aboutMe,
-      profileInput.whoIdLikeToMeet,
-      profileInput.generalInterests,
-      profileInput.music,
-      profileInput.movies,
-      profileInput.games,
-      profileInput.themeBackgroundColor,
-      profileInput.themeTextColor,
-      profileInput.themeBoxColor,
-      profileInput.themeBorderColor,
-      profileInput.themeHeaderColor,
-      profileInput.themeFontFamily,
-      profileInput.themeBackgroundRepeat,
-      profileInput.themeBackgroundSize,
-      profileInput.themeBackgroundPosition,
-      profileInput.profileSongTitle,
-      profileInput.profileSongArtist,
-      profileInput.profileSongUrl
-    ]
+    values
   );
 
   if (result.rowCount === 0) {
@@ -245,6 +285,7 @@ export async function updateOwnProfile(userId, profileInput) {
 }
 
 export async function getProfileByUsername(username) {
+  const hasLayoutPreset = await hasLayoutPresetColumn();
   const profileResult = await query(
     `
       SELECT
@@ -256,6 +297,7 @@ export async function getProfileByUsername(username) {
         profiles.headline,
         profiles.mood,
         profiles.status_message,
+        ${layoutPresetSelect(hasLayoutPreset)},
         profiles.about_me,
         profiles.who_id_like_to_meet,
         profiles.general_interests,

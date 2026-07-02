@@ -26,6 +26,7 @@ const emptyProfile = {
   headline: '',
   mood: '',
   statusMessage: '',
+  layoutPreset: 'classic',
   aboutMe: '',
   whoIdLikeToMeet: '',
   generalInterests: '',
@@ -185,6 +186,19 @@ const blueClassicTheme = themePresets[0].values;
 const backgroundRepeatOptions = ['repeat', 'no-repeat', 'repeat-x', 'repeat-y'];
 const backgroundSizeOptions = ['auto', 'cover', 'contain'];
 const backgroundPositionOptions = ['center', 'top', 'bottom', 'left', 'right'];
+
+const layoutPresetOptions = [
+  { value: 'classic', label: 'Classic', description: 'The default ByteSpace profile grid with sidebar and main chaos.' },
+  { value: 'compact', label: 'Compact', description: 'Tighter spacing for short profiles and quick scanning.' },
+  { value: 'wide', label: 'Wide', description: 'More room for posts, comments, music, and long blurbs.' },
+  { value: 'sidebar_left', label: 'Sidebar Left', description: 'Profile info on the left, content on the right.' },
+  { value: 'sidebar_right', label: 'Sidebar Right', description: 'Main content first with the profile sidebar on the right.' },
+  { value: 'spotlight', label: 'Spotlight', description: 'Bigger header energy for status, music, and stats.' }
+];
+
+function getLayoutPresetLabel(value) {
+  return layoutPresetOptions.find((option) => option.value === value)?.label || 'Classic';
+}
 
 function TextInput({ label, name, value, onChange, multiline = false }) {
   return (
@@ -482,6 +496,32 @@ export default function EditProfilePage({ currentUser }) {
           </fieldset>
 
           <fieldset>
+            <legend>Profile Layout</legend>
+            <p className="editor-helper">Layout presets are safe structure changes only. No raw HTML, CSS, or script injection.</p>
+            <label>
+              Layout preset
+              <select name="layoutPreset" value={profile.layoutPreset} onChange={updateField}>
+                {layoutPresetOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+            <div className="layout-preset-preview-grid" aria-label="Layout preset descriptions">
+              {layoutPresetOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`layout-preset-card ${profile.layoutPreset === option.value ? 'layout-preset-card--active' : ''}`}
+                  onClick={() => updateField({ target: { name: 'layoutPreset', value: option.value } })}
+                >
+                  <strong>{option.label}</strong>
+                  <span>{option.description}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
             <legend>Profile Song</legend>
             <p className="editor-helper">Paste a YouTube, Spotify, SoundCloud, Bandcamp, Apple Music, or music link. No uploads or autoplay. Keep it chill.</p>
             <TextInput label="Song Title" name="profileSongTitle" value={profile.profileSongTitle} onChange={updateField} />
@@ -570,6 +610,7 @@ export default function EditProfilePage({ currentUser }) {
             }}
           >
             <h3 style={{ background: profile.themeHeaderColor }}>Live Profile Preview</h3>
+            <p className="profile-preview-layout-label">Layout: {getLayoutPresetLabel(profile.layoutPreset)}</p>
             <div className="profile-preview-identity" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               {previewAvatarUrl ? (
                 <img
