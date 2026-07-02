@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import blockRoutes from './routes/blockRoutes.js';
 import bulletinRoutes from './routes/bulletinRoutes.js';
@@ -66,6 +67,7 @@ app.post('/api/bulletins', writeRateLimiter);
 app.post('/api/friends/request/:username', writeRateLimiter);
 app.post(['/api/profile/me/avatar', '/api/profile/me/background'], uploadRateLimiter);
 
+app.use('/api/admin', adminRoutes);
 app.use('/api/auth', sessionMiddleware, authRoutes);
 app.use('/api/blocks', blockRoutes);
 app.use('/api/bulletins', bulletinRoutes);

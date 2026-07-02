@@ -56,7 +56,9 @@ function safeUser(user) {
   return {
     id: user.id,
     username: user.username,
-    email: user.email
+    email: user.email,
+    isAdmin: Boolean(user.is_admin ?? user.isAdmin),
+    suspendedAt: user.suspended_at || user.suspendedAt || null
   };
 }
 
@@ -187,21 +189,44 @@ export async function login(req, res) {
   }
 
   try {
-    const userResult = await query(
-      `
-        SELECT id, username, email, password_hash
-        FROM users
-        WHERE LOWER(username) = $1 OR LOWER(email) = $1
-        LIMIT 1
-      `,
-      [emailOrUsername]
-    );
+    let userResult;
+
+    try {
+      userResult = await query(
+        `
+          SELECT id, username, email, password_hash, is_admin, suspended_at
+          FROM users
+          WHERE LOWER(username) = $1 OR LOWER(email) = $1
+          LIMIT 1
+        `,
+        [emailOrUsername]
+      );
+    } catch (error) {
+      if (error.code !== '42703') {
+        throw error;
+      }
+
+      userResult = await query(
+        `
+          SELECT id, username, email, password_hash
+          FROM users
+          WHERE LOWER(username) = $1 OR LOWER(email) = $1
+          LIMIT 1
+        `,
+        [emailOrUsername]
+      );
+    }
 
     if (userResult.rowCount === 0) {
       return res.status(401).json({ error: 'Invalid login.' });
     }
 
     const user = userResult.rows[0];
+
+    if (user.suspended_at) {
+      return res.status(403).json({ error: 'This account has been suspended.' });
+    }
+
     let passwordMatches = false;
 
     try {

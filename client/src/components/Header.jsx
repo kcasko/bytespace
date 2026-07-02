@@ -14,6 +14,7 @@ export default function Header({ currentUser, onLogout }) {
               <Link to="/bulletins">Bulletins</Link>
               <Link to="/profile/edit">Edit Profile</Link>
               <Link to="/settings">Settings</Link>
+              {currentUser.isAdmin && <Link to="/admin">Admin</Link>}
               <Link to={`/profile/${currentUser.username}`}>@{currentUser.username}</Link>
               <button type="button" onClick={onLogout}>Logout</button>
             </>

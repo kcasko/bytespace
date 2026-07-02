@@ -1834,3 +1834,55 @@ button {
     opacity: 0.45;
   }
 }
+
+
+.inline-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.inline-form input {
+  flex: 1 1 240px;
+}
+
+.admin-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-list.compact {
+  gap: 0.4rem;
+}
+
+.admin-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  border: 2px solid var(--border-color, #1f4fa3);
+  background: #fffef2;
+  padding: 0.75rem;
+}
+
+.admin-item p {
+  margin: 0.25rem 0;
+}
+
+.status-pill {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid #111;
+  background: #d7f7ff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-pill.danger {
+  background: #ffd6d6;
+}

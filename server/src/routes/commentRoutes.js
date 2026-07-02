@@ -6,6 +6,7 @@ import {
   canViewProfile,
   getPrivacyForUsername
 } from '../db/settingsQueries.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
 
 const router = Router();
@@ -45,11 +46,7 @@ router.get('/:username', sessionMiddleware, async (req, res) => {
   }
 });
 
-router.post('/:username', sessionMiddleware, async (req, res) => {
-  if (!req.session?.user) {
-    return res.status(401).json({ error: 'You must be logged in to comment' });
-  }
-
+router.post('/:username', sessionMiddleware, requireAuth, async (req, res) => {
   const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
 
   if (!body) {

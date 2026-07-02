@@ -391,6 +391,60 @@ allow from 172.20.0.0/16 to any port 5000 proto tcp
 
 PostgreSQL and upload backups were created during deployment. Backup artifacts must stay out of git; `.gitignore` ignores local backup artifacts.
 
+### Admin Bootstrap and Moderation
+
+ByteSpace v2.5 adds backend-enforced admin moderation. The admin page is available at:
+
+```text
+https://bytespace.casko.dev/admin
+```
+
+Admin API routes live under `/api/admin/*` and require a logged-in user with `users.is_admin = true`. Non-authenticated users receive `401`; logged-in non-admin users receive `403`. Password hashes, session secrets, database URLs, invite codes, and production `.env` values must never be exposed.
+
+Apply the v2.5 user-column migration first:
+
+```sql
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS suspension_reason TEXT;
+```
+
+To grant admin status manually, connect to PostgreSQL on the VPS and update the intended account:
+
+```bash
+sudo -u postgres psql -d bytespace
+```
+
+```sql
+UPDATE users SET is_admin = true WHERE username = 'your_username';
+```
+
+To remove admin status later:
+
+```sql
+UPDATE users SET is_admin = false WHERE username = 'your_username';
+```
+
+Suspension sets `users.suspended_at` and optional `users.suspension_reason`. Suspended users cannot log in or use protected write actions. Admins can unsuspend users from `/admin` or with SQL if needed:
+
+```sql
+UPDATE users
+SET suspended_at = NULL, suspension_reason = NULL
+WHERE username = 'their_username';
+```
+
+Moderation capabilities in v2.5:
+
+- list users
+- view recent signups
+- view recent comments and bulletins
+- suspend or unsuspend users
+- delete comments
+- delete bulletins
+
+Do not edit or print `/opt/bytespace/server/.env` while performing admin bootstrap.
+
 ## 12. Smoke Tests
 
 Server checks:

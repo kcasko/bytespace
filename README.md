@@ -1504,6 +1504,35 @@ INVITE_CODE=REDACTED_PRIVATE_INVITE_CODE
 
 To change modes safely, edit the private server env file on the host, restart `bytespace.service`, and verify `/api/health`. Never commit `.env`, invite codes, database dumps, or backup archives.
 
+### v2.5 Admin Moderation Foundation
+
+ByteSpace includes a basic backend-enforced admin and moderation foundation. Admin users can open `/admin` to list users, view recent signups, review recent comments and bulletins, suspend or unsuspend users, and delete comments or bulletins.
+
+Schema additions:
+
+- `users.is_admin BOOLEAN NOT NULL DEFAULT FALSE`
+- `users.suspended_at TIMESTAMPTZ`
+- `users.suspension_reason TEXT`
+
+Admin access is checked server-side on `/api/admin/*`; frontend visibility is only a convenience. Admin routes never return password hashes. Suspended users cannot log in or perform protected write actions such as profile updates, uploads, comments, bulletins, friend requests, settings changes, or block actions. They receive: `This account has been suspended.`
+
+Apply the v2.5 user-column migration on the server before using admin tools:
+
+```sql
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS suspension_reason TEXT;
+```
+
+There is no public route to make an admin. Grant admin status manually from PostgreSQL on the server:
+
+```sql
+UPDATE users SET is_admin = true WHERE username = 'your_username';
+```
+
+Use the production database shell, not a committed file. Do not commit `.env`, invite codes, database URLs, backup artifacts, or moderation exports.
+
 ## Next Pass
 
 The next pass should continue tightening social profile workflows and production operations.

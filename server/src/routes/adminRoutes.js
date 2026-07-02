@@ -1,0 +1,184 @@
+import { Router } from 'express';
+import {
+  countAdminsExcluding,
+  deleteBulletinById,
+  deleteCommentById,
+  getRecentBulletins,
+  getRecentComments,
+  getRecentSignups,
+  getUserDetail,
+  listUsers,
+  suspendUserByUsername,
+  unsuspendUserByUsername
+} from '../db/adminQueries.js';
+import { requireAdmin } from '../middleware/requireAuth.js';
+import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
+
+const router = Router();
+
+router.use(sessionMiddleware, requireAdmin);
+
+function parseLimit(value, fallback = 25, max = 100) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return Math.min(parsed, max);
+}
+
+router.get('/users', async (req, res) => {
+  try {
+    const users = await listUsers({
+      search: req.query?.q || '',
+      limit: parseLimit(req.query?.limit, 100, 200)
+    });
+    return res.json({ users });
+  } catch (error) {
+    console.error('Failed to list admin users:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Users unavailable.' });
+  }
+});
+
+router.get('/users/:username', async (req, res) => {
+  try {
+    const user = await getUserDetail(req.params.username);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({ user });
+  } catch (error) {
+    console.error('Failed to load admin user detail:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'User unavailable.' });
+  }
+});
+
+router.put('/users/:username/suspend', async (req, res) => {
+  try {
+    const user = await getUserDetail(req.params.username);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (user.id === req.session.user.id) {
+      return res.status(400).json({ error: 'You cannot suspend your own account.' });
+    }
+
+    if (user.isAdmin) {
+      const otherAdminCount = await countAdminsExcluding(user.id);
+      if (otherAdminCount === 0) {
+        return res.status(400).json({ error: 'Cannot suspend the only active admin.' });
+      }
+    }
+
+    const suspended = await suspendUserByUsername(user.username, req.body?.reason || '');
+
+    if (!suspended) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const updatedUser = await getUserDetail(user.username);
+    return res.json({ user: updatedUser });
+  } catch (error) {
+    console.error('Failed to suspend user:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'User suspension failed.' });
+  }
+});
+
+router.put('/users/:username/unsuspend', async (req, res) => {
+  try {
+    const user = await getUserDetail(req.params.username);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const unsuspended = await unsuspendUserByUsername(user.username);
+
+    if (!unsuspended) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const updatedUser = await getUserDetail(user.username);
+    return res.json({ user: updatedUser });
+  } catch (error) {
+    console.error('Failed to unsuspend user:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'User unsuspend failed.' });
+  }
+});
+
+router.get('/recent/signups', async (req, res) => {
+  try {
+    const users = await getRecentSignups(parseLimit(req.query?.limit, 10, 50));
+    return res.json({ users });
+  } catch (error) {
+    console.error('Failed to load recent signups:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Recent signups unavailable.' });
+  }
+});
+
+router.get('/recent/comments', async (req, res) => {
+  try {
+    const comments = await getRecentComments(parseLimit(req.query?.limit, 25, 100));
+    return res.json({ comments });
+  } catch (error) {
+    console.error('Failed to load recent comments:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Recent comments unavailable.' });
+  }
+});
+
+router.get('/recent/bulletins', async (req, res) => {
+  try {
+    const bulletins = await getRecentBulletins(parseLimit(req.query?.limit, 25, 100));
+    return res.json({ bulletins });
+  } catch (error) {
+    console.error('Failed to load recent bulletins:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Recent bulletins unavailable.' });
+  }
+});
+
+router.delete('/comments/:id', async (req, res) => {
+  const commentId = Number(req.params.id);
+
+  if (!Number.isInteger(commentId) || commentId <= 0) {
+    return res.status(400).json({ error: 'Comment ID is invalid.' });
+  }
+
+  try {
+    const deleted = await deleteCommentById(commentId);
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Comment not found.' });
+    }
+
+    return res.json({ status: 'ok' });
+  } catch (error) {
+    console.error('Failed to delete comment:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Comment delete failed.' });
+  }
+});
+
+router.delete('/bulletins/:id', async (req, res) => {
+  const bulletinId = Number(req.params.id);
+
+  if (!Number.isInteger(bulletinId) || bulletinId <= 0) {
+    return res.status(400).json({ error: 'Bulletin ID is invalid.' });
+  }
+
+  try {
+    const deleted = await deleteBulletinById(bulletinId);
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Bulletin not found.' });
+    }
+
+    return res.json({ status: 'ok' });
+  } catch (error) {
+    console.error('Failed to delete bulletin:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Bulletin delete failed.' });
+  }
+});
+
+export default router;

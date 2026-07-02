@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { getMe, logout } from './api/authApi.js';
 import Header from './components/Header.jsx';
+import AdminPage from './pages/AdminPage.jsx';
 import BrowsePage from './pages/BrowsePage.jsx';
 import BulletinsPage from './pages/BulletinsPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
@@ -53,6 +54,7 @@ export default function App() {
           path="/"
           element={currentUser ? <DashboardPage currentUser={currentUser} /> : <LandingPage />}
         />
+        <Route path="/admin" element={<AdminPage currentUser={currentUser} />} />
         <Route path="/browse" element={<BrowsePage currentUser={currentUser} />} />
         <Route path="/bulletins" element={<BulletinsPage currentUser={currentUser} />} />
         <Route path="/friends" element={<FriendsPage currentUser={currentUser} />} />

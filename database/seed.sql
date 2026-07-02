@@ -1,3 +1,11 @@
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS suspension_reason TEXT;
+
+UPDATE users
+SET is_admin = COALESCE(is_admin, FALSE);
+
 UPDATE users
 SET username = 'lacutis',
     email = 'lacutis@example.local',
