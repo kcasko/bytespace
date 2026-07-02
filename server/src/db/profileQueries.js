@@ -119,7 +119,7 @@ export async function getOwnProfileByUserId(userId) {
         profiles.display_name,
         profiles.headline,
         profiles.mood,
-        profile_status_messages.status_message,
+        profiles.status_message,
         profiles.about_me,
         profiles.who_id_like_to_meet,
         profiles.general_interests,
@@ -145,7 +145,6 @@ export async function getOwnProfileByUserId(userId) {
         profiles.theme_background_size,
         profiles.theme_background_position
       FROM profiles
-      LEFT JOIN profile_status_messages ON profile_status_messages.user_id = profiles.user_id
       WHERE profiles.user_id = $1
     `,
     [userId]
@@ -166,30 +165,32 @@ export async function updateOwnProfile(userId, profileInput) {
         display_name = $2,
         headline = $3,
         mood = $4,
-        about_me = $5,
-        who_id_like_to_meet = $6,
-        general_interests = $7,
-        music = $8,
-        movies = $9,
-        games = $10,
-        theme_background_color = $11,
-        theme_text_color = $12,
-        theme_box_color = $13,
-        theme_border_color = $14,
-        theme_header_color = $15,
-        theme_font_family = $16,
-        theme_background_repeat = $17,
-        theme_background_size = $18,
-        theme_background_position = $19,
-        profile_song_title = $20,
-        profile_song_artist = $21,
-        profile_song_url = $22,
+        status_message = $5,
+        about_me = $6,
+        who_id_like_to_meet = $7,
+        general_interests = $8,
+        music = $9,
+        movies = $10,
+        games = $11,
+        theme_background_color = $12,
+        theme_text_color = $13,
+        theme_box_color = $14,
+        theme_border_color = $15,
+        theme_header_color = $16,
+        theme_font_family = $17,
+        theme_background_repeat = $18,
+        theme_background_size = $19,
+        theme_background_position = $20,
+        profile_song_title = $21,
+        profile_song_artist = $22,
+        profile_song_url = $23,
         updated_at = NOW()
       WHERE user_id = $1
       RETURNING
         display_name,
         headline,
         mood,
+        status_message,
         about_me,
         who_id_like_to_meet,
         general_interests,
@@ -214,6 +215,7 @@ export async function updateOwnProfile(userId, profileInput) {
       profileInput.displayName,
       profileInput.headline,
       profileInput.mood,
+      profileInput.statusMessage,
       profileInput.aboutMe,
       profileInput.whoIdLikeToMeet,
       profileInput.generalInterests,
@@ -239,21 +241,7 @@ export async function updateOwnProfile(userId, profileInput) {
     return null;
   }
 
-  await query(
-    `
-      INSERT INTO profile_status_messages (user_id, status_message, updated_at)
-      VALUES ($1, $2, NOW())
-      ON CONFLICT (user_id) DO UPDATE SET
-        status_message = EXCLUDED.status_message,
-        updated_at = NOW()
-    `,
-    [userId, profileInput.statusMessage]
-  );
-
-  return mapEditableProfileRow({
-    ...result.rows[0],
-    status_message: profileInput.statusMessage
-  });
+  return mapEditableProfileRow(result.rows[0]);
 }
 
 export async function getProfileByUsername(username) {
@@ -267,7 +255,7 @@ export async function getProfileByUsername(username) {
         profiles.display_name,
         profiles.headline,
         profiles.mood,
-        profile_status_messages.status_message,
+        profiles.status_message,
         profiles.about_me,
         profiles.who_id_like_to_meet,
         profiles.general_interests,
@@ -290,7 +278,6 @@ export async function getProfileByUsername(username) {
         profiles.theme_background_position
       FROM users
       INNER JOIN profiles ON profiles.user_id = users.id
-      LEFT JOIN profile_status_messages ON profile_status_messages.user_id = users.id
       WHERE LOWER(users.username) = LOWER($1)
     `,
     [username]

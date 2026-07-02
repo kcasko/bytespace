@@ -1597,10 +1597,17 @@ Public profile polish:
 Schema/runtime notes:
 
 - Fresh schema includes `profiles.status_message TEXT`.
-- The production app also creates `profile_status_messages` at startup as an app-owned compatibility store when an existing database user cannot alter the original `profiles` table.
+- v2.8.1 uses `profiles.status_message` directly in production. The old `profile_status_messages` compatibility table may still exist for one release, but normal runtime code no longer reads from or writes to it.
 - Badges are derived server-side from `users.is_admin`, `users.created_at`, and low user IDs. Users cannot self-assign badges.
 
 Safety notes: status messages and other user profile text are plain text only. ByteSpace still does not support raw custom CSS, untrusted HTML, or profile script injection. Do not commit `.env`, invite codes, database URLs, backups, or moderation exports.
+
+
+### v2.8.1 Profile Status Schema Cleanup
+
+ByteSpace now reads and writes profile status messages directly from `profiles.status_message`. The legacy `profile_status_messages` compatibility table is intentionally not dropped in this patch, but it is unused by normal runtime code and can be considered for removal in a later migration after backup verification.
+
+Startup still checks `profiles.status_message` with `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` so fresh or lagging databases have the expected column. Do not commit `.env`, invite codes, database URLs, or backup artifacts.
 
 ## Next Pass
 

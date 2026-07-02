@@ -653,7 +653,7 @@ S3 retention should be handled by an S3 Lifecycle rule deleting `bytespace/` obj
 ByteSpace v2.8 adds profile polish without changing deployment topology:
 
 - `profiles.status_message TEXT` is part of the fresh schema.
-- Existing production databases may also use the app-owned `profile_status_messages` table created at startup when the deployed app user cannot alter `profiles`.
+- v2.8.1 production uses `profiles.status_message` directly. The legacy `profile_status_messages` table may still exist on the server for one release, but normal runtime code no longer reads from or writes to it.
 - Users edit status messages from `/profile/edit`; the server validates a 120 character maximum.
 - Public profiles show a status line, stats box, and display-only badges.
 - Badges are server-derived: admin, new member, and founder/early user.
@@ -666,6 +666,18 @@ Operational reminders:
 - Keep `/opt/bytespace/server/.env` private. Do not print, commit, or copy it into docs.
 - Do not commit backup artifacts from `/opt/bytespace-backups` or generated upload archives.
 - Profile text remains plain React text; raw HTML and raw custom CSS are intentionally unavailable.
+
+
+## v2.8.1 Profile Status Schema Cleanup
+
+Production now stores profile status messages in `profiles.status_message` directly. The previous `profile_status_messages` compatibility table is left in PostgreSQL and should not be dropped during this release, but application queries no longer depend on it.
+
+Deployment checks after this patch:
+
+- Confirm `/api/profile/keith` returns the expected `statusMessage`.
+- Save a status message through `/profile/edit` or the profile API.
+- Confirm `/api/profile/keith` reflects the saved value.
+- Keep `/opt/bytespace/server/.env` private and do not copy production secrets into docs.
 
 ## 14. Rollback Plan
 
