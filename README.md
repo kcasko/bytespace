@@ -1470,19 +1470,40 @@ The live production env file is `/opt/bytespace/server/.env`. It must remain pri
 See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for the live deployment state, NPM 504 root cause, UFW rule, health checks, backup notes, and update/rollback commands.
 
 
-### Optional S3 Offsite Backups
+### Active S3 Offsite Backups
 
-ByteSpace includes `scripts/bytespace-backup.sh` for local PostgreSQL and uploads backups under `/opt/bytespace-backups`. Local backup retention is 7 days by default.
+ByteSpace runs `/opt/bytespace/scripts/bytespace-backup.sh` every day at `03:00` from cron:
 
-S3 upload is optional and configured outside the repo with `/etc/bytespace/backup.env` or exported environment variables. Do not commit AWS credentials, bucket names for private deployments, database dumps, upload archives, or generated backup files.
-
-When enabled, the script uploads both backup artifacts to:
-
-```text
-s3://BYTESPACE_BACKUP_BUCKET/bytespace/YYYY-MM-DD/
+```cron
+0 3 * * * /opt/bytespace/scripts/bytespace-backup.sh >> /var/log/bytespace-backup.log 2>&1
 ```
 
-S3 retention should be handled with an S3 Lifecycle rule that deletes objects older than 7 days. See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for AWS CLI installation, IAM permissions, config examples, manual test commands, and verification steps.
+Local backups are stored in `/opt/bytespace-backups`, and the local script keeps 7 days of PostgreSQL `.sql` dumps and uploads `.tar.gz` archives. Offsite S3 backups are enabled in production and upload the same two artifacts to:
+
+```text
+s3://bytespace-backups-keith-2026/bytespace/YYYY-MM-DD/
+```
+
+The live AWS backup config is `/etc/bytespace/backup.env` with `root:root` ownership and `600` permissions. It lives outside the repo and must never be printed, committed, copied into docs, or exposed. AWS credentials are stored outside git. The production server env file `/opt/bytespace/server/.env` is also private and must not be printed or copied.
+
+Remote 7-day cleanup is handled by the S3 Lifecycle rule. Local 7-day cleanup is handled by the backup script. The manual S3 upload test passed on `2026-07-02`; verified objects included:
+
+```text
+s3://bytespace-backups-keith-2026/bytespace/2026-07-02/bytespace-db-20260702-211306.sql
+s3://bytespace-backups-keith-2026/bytespace/2026-07-02/bytespace-uploads-20260702-211306.tar.gz
+```
+
+Verify backups without exposing secrets:
+
+```bash
+tail -100 /var/log/bytespace-backup.log
+sudo -i
+source /etc/bytespace/backup.env
+aws s3 ls "s3://$BYTESPACE_BACKUP_BUCKET/$BYTESPACE_S3_PREFIX/" --recursive | tail -20
+exit
+```
+
+See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for AWS CLI requirements, IAM permission shape, backup verification, and safety notes.
 
 ### v2.4 Invite-Only Registration
 
@@ -1660,6 +1681,12 @@ URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must 
 
 Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
 
+
+### v3.1.2 Active S3 Backup Documentation
+
+ByteSpace v3.1.2 documents that production offsite S3 backups are active and tested. Local backups continue to live in `/opt/bytespace-backups` with 7-day retention, while S3 backups use the `bytespace/YYYY-MM-DD/` prefix in `bytespace-backups-keith-2026` and rely on an S3 Lifecycle rule for remote 7-day retention.
+
+No application behavior changed. Do not print or commit `/opt/bytespace/server/.env`, `/etc/bytespace/backup.env`, AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
 
 ### v3.1 Mobile Polish
 
