@@ -32,11 +32,13 @@ export default function Header({ currentUser, onLogout }) {
 
     if (currentUser) {
       intervalId = window.setInterval(loadUnreadCount, 60000);
+      window.addEventListener('bytespace:notifications-changed', loadUnreadCount);
     }
 
     return () => {
       ignore = true;
       if (intervalId) window.clearInterval(intervalId);
+      window.removeEventListener('bytespace:notifications-changed', loadUnreadCount);
     };
   }, [currentUser]);
 

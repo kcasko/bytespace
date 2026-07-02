@@ -163,11 +163,29 @@ export async function getUnreadNotificationCount(userId) {
 export async function markNotificationRead(userId, notificationId) {
   const result = await query(
     `
-      UPDATE notifications
-      SET read_at = COALESCE(read_at, NOW())
-      WHERE id = $1
-        AND user_id = $2
-      RETURNING id, user_id, actor_user_id, type, title, body, link_url, metadata_json, read_at, created_at
+      WITH updated_notification AS (
+        UPDATE notifications
+        SET read_at = COALESCE(read_at, NOW())
+        WHERE id = $1
+          AND user_id = $2
+        RETURNING id, user_id, actor_user_id, type, title, body, link_url, metadata_json, read_at, created_at
+      )
+      SELECT
+        updated_notification.id,
+        updated_notification.user_id,
+        updated_notification.actor_user_id,
+        actor_users.username AS actor_username,
+        actor_profiles.display_name AS actor_display_name,
+        updated_notification.type,
+        updated_notification.title,
+        updated_notification.body,
+        updated_notification.link_url,
+        updated_notification.metadata_json,
+        updated_notification.read_at,
+        updated_notification.created_at
+      FROM updated_notification
+      LEFT JOIN users actor_users ON actor_users.id = updated_notification.actor_user_id
+      LEFT JOIN profiles actor_profiles ON actor_profiles.user_id = actor_users.id
     `,
     [notificationId, userId]
   );

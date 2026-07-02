@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   getNotifications,
   markAllNotificationsRead,
@@ -18,15 +18,20 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function NotificationLink({ notification, onRead }) {
+function notifyUnreadCountChanged() {
+  window.dispatchEvent(new Event('bytespace:notifications-changed'));
+}
+
+function NotificationLink({ notification, onOpen }) {
   const content = notification.linkUrl ? (
-    <Link to={notification.linkUrl} onClick={onRead}>Open</Link>
+    <Link to={notification.linkUrl} onClick={onOpen}>Open</Link>
   ) : null;
 
   return content;
 }
 
 export default function NotificationsPage({ currentUser }) {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [status, setStatus] = useState(currentUser ? 'loading' : 'logged-out');
@@ -57,19 +62,47 @@ export default function NotificationsPage({ currentUser }) {
     loadNotifications();
   }, [currentUser]);
 
-  async function markRead(notificationId) {
+  async function markRead(notificationId, { quiet = false } = {}) {
     setMessage('');
     setError('');
+
+    const wasUnread = notifications.some((notification) => (
+      notification.id === notificationId && !notification.readAt
+    ));
 
     try {
       const updated = await markNotificationRead(notificationId);
       setNotifications((current) => current.map((notification) => (
         notification.id === updated.id ? updated : notification
       )));
-      setUnreadCount((current) => Math.max(0, current - 1));
-      setMessage('Notification marked as read. The blinking light calmed down.');
+
+      if (wasUnread) {
+        setUnreadCount((current) => Math.max(0, current - 1));
+      }
+
+      notifyUnreadCountChanged();
+
+      if (!quiet) {
+        setMessage('Notification marked as read. The blinking light calmed down.');
+      }
+
+      return true;
     } catch (err) {
       setError(err.message);
+      return false;
+    }
+  }
+
+  async function openNotification(event, notification) {
+    if (!notification.linkUrl || notification.readAt) {
+      return;
+    }
+
+    event.preventDefault();
+    const marked = await markRead(notification.id, { quiet: true });
+
+    if (marked) {
+      navigate(notification.linkUrl);
     }
   }
 
@@ -84,6 +117,7 @@ export default function NotificationsPage({ currentUser }) {
         readAt: notification.readAt || new Date().toISOString()
       })));
       setUnreadCount(0);
+      notifyUnreadCountChanged();
       setMessage('All notifications marked as read. Inbox goblin contained.');
     } catch (err) {
       setError(err.message);
@@ -139,7 +173,7 @@ export default function NotificationsPage({ currentUser }) {
               </header>
               {notification.body && <p>{notification.body}</p>}
               <div className="notification-actions">
-                <NotificationLink notification={notification} onRead={() => !notification.readAt && markRead(notification.id)} />
+                <NotificationLink notification={notification} onOpen={(event) => openNotification(event, notification)} />
                 {!notification.readAt && (
                   <button type="button" onClick={() => markRead(notification.id)}>Mark Read</button>
                 )}
