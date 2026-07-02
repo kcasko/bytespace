@@ -18,3 +18,8 @@ server/uploads/avatars/*
 !server/uploads/avatars/.gitkeep
 server/uploads/backgrounds/*
 !server/uploads/backgrounds/.gitkeep
+
+# Local ByteSpace backups
+*.sql
+*.tar.gz
+backups/
