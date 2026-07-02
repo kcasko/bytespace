@@ -732,6 +732,36 @@ Validation:
 
 Security reminders: keep `/opt/bytespace/server/.env` private, do not add music file uploads, do not host copyrighted audio, and do not store secrets in profile music fields.
 
+
+## v3.1 Mobile Polish Notes
+
+ByteSpace v3.1 is a frontend responsive-layout pass. It does not require database changes, environment changes, new services, or reverse proxy changes.
+
+Mobile-focused pages:
+
+- `/`
+- `/login`
+- `/register`
+- `/profile/:username`
+- `/profile/edit`
+- `/admin`
+- `/notifications`
+- `/bulletins`
+- `/friends`
+- `/settings`
+
+Deployment verification remains the normal Node build and service restart:
+
+```bash
+cd /opt/bytespace
+npm run build
+sudo systemctl restart bytespace
+curl -i https://bytespace.casko.dev/api/health
+curl -i https://bytespace.casko.dev/api/db/health
+```
+
+Safety note: this release only adjusts CSS/layout and docs. It does not change invite-only registration, admin access, reports, audit logs, notifications behavior, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, or `/opt/bytespace/server/.env`.
+
 ## 14. Rollback Plan
 
 Use git tags.

@@ -1660,6 +1660,21 @@ URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must 
 
 Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
 
+
+### v3.1 Mobile Polish
+
+ByteSpace v3.1 improves phone and small-screen usability while keeping the retro profile-page style intact. This pass changes responsive layout and spacing only; it does not change auth, invite-only registration, admin permissions, reports, audit logs, notifications logic, backups, or deployment configuration.
+
+Responsive improvements:
+
+- Header/nav wraps into comfortable tap targets on small screens.
+- Page shells and auth panels no longer rely on fixed desktop widths under mobile breakpoints.
+- Profile pages stack sidebar and main content, scale avatars/backgrounds, keep badges/stats readable, and keep YouTube music previews responsive.
+- Edit profile, login, register, comments, bulletins, reports, settings, and upload controls use full-width inputs/buttons where needed.
+- Admin sections, reports, audit logs, notification cards, dashboard panels, and friend/comment/bulletin lists stack cleanly on mobile.
+
+Breakpoints are centered around `768px` and `480px`. The app remains intentionally loud and nostalgic; the goal is usability without turning ByteSpace into a modern SaaS dashboard.
+
 ## Next Pass
 
 The next pass should continue tightening social profile workflows and production operations.
