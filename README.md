@@ -1458,6 +1458,14 @@ See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for:
 - Nginx Proxy Manager settings
 - upload persistence, update, backup, rollback, and smoke-test steps
 
+### v2.3 Live ByteGeist Deployment
+
+ByteSpace is deployed live at `https://bytespace.casko.dev` on `bytegeist-cloud` under `/opt/bytespace`. The production service is `bytespace.service`, the Node app listens on host port `5000`, and Nginx Proxy Manager proxies to `http://172.20.0.1:5000` from Docker.
+
+The live production env file is `/opt/bytespace/server/.env`. It must remain private and must not be printed, committed, or copied into docs. Backup artifacts for PostgreSQL and uploads must also stay out of git.
+
+See [docs/BYTEGEIST_DEPLOYMENT.md](docs/BYTEGEIST_DEPLOYMENT.md) for the live deployment state, NPM 504 root cause, UFW rule, health checks, backup notes, and update/rollback commands.
+
 ## Next Pass
 
 The next pass should add cloud storage (e.g. S3-compatible) to replace local uploads, then continue tightening social profile workflows.

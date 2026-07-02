@@ -262,11 +262,13 @@ Create a Proxy Host:
 
 - Domain Names: `bytespace.casko.dev`
 - Scheme: `http`
-- Forward Hostname / IP: server local IP or `127.0.0.1`
+- Forward Hostname / IP: `172.20.0.1` for the live ByteGeist Docker NPM setup
 - Forward Port: `5000`
 - Cache Assets: off unless you know what you are caching
 - Block Common Exploits: on
 - Websockets Support: off unless needed later
+
+Important: when Nginx Proxy Manager runs in Docker, `127.0.0.1` points at the NPM container, not the VPS host. Using `127.0.0.1` caused a `504 Gateway Time-out`. The working upstream for the live deployment is `http://172.20.0.1:5000`.
 
 SSL tab:
 
@@ -332,6 +334,33 @@ Check logs if restart fails:
 ```bash
 journalctl -u bytespace -n 100 --no-pager
 ```
+
+## Live v2.3 Deployment State
+
+Current production deployment:
+
+- URL: `https://bytespace.casko.dev`
+- Host: `bytegeist-cloud`
+- OS: Ubuntu 24.04.4 LTS
+- App path: `/opt/bytespace`
+- Production env file: `/opt/bytespace/server/.env`
+- systemd service: `bytespace.service`
+- Node app listens on host port `5000`
+- Nginx Proxy Manager runs in Docker
+- NPM proxy target: `http://172.20.0.1:5000`
+- Health checks: `/api/health` and `/api/db/health`
+
+Do not print, copy, commit, or document the real contents of `/opt/bytespace/server/.env`. It contains production secrets and must stay private on the server.
+
+The prior `504 Gateway Time-out` was caused by using `127.0.0.1` as the NPM upstream. Inside the NPM container, `127.0.0.1` is the container itself, not the VPS host. The Docker network gateway must be used instead.
+
+UFW allows the NPM Docker network to reach the Node app:
+
+```text
+allow from 172.20.0.0/16 to any port 5000 proto tcp
+```
+
+PostgreSQL and upload backups were created during deployment. Backup artifacts must stay out of git; `.gitignore` ignores local backup artifacts.
 
 ## 12. Smoke Tests
 
