@@ -1682,6 +1682,22 @@ URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must 
 Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
 
 
+### v3.3 Theme Customization Polish
+
+ByteSpace v3.3 improves `/profile/edit` theme controls while keeping customization preset-based and safe. The editor groups controls into Theme preset, Colors, Font, Background image behavior, and Preview sections. Preset cards now show descriptions, swatches, and selected state.
+
+Supported safe controls:
+
+- hex colors for background, text, box/card, border, and header/accent
+- safe font allowlist: System Retro, Comic Sans Chaos, Courier Terminal, Verdana Classic, Georgia Diary, Trebuchet Web, Tahoma Portal, and Times New Roman Zine
+- background repeat: `repeat`, `no-repeat`, `repeat-x`, `repeat-y`
+- background size: `auto`, `cover`, `contain`
+- background position: `center`, `top`, `bottom`, `left`, `right`
+
+Server validation rejects arbitrary CSS strings, unsupported font values, and unsupported background behavior values. Hex colors may be `#000000` or shorthand like `#fff`, which the server normalizes before saving. Public profile theme rendering uses sanitized allowlisted values so older bad data falls back to safe defaults.
+
+No raw CSS, raw HTML, JavaScript, user-provided embeds, or arbitrary CSS property editing was added. Do not print or commit `/opt/bytespace/server/.env`, `/etc/bytespace/backup.env`, AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
+
 ### v3.2 Profile Layout Customization
 
 ByteSpace v3.2 adds safe profile layout presets. Users choose a structure from `/profile/edit`; the value is stored in `profiles.layout_preset` and applied on public profiles as a CSS class. There is no raw HTML, raw CSS, JavaScript injection, draggable editor, or user-provided style string.

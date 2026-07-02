@@ -12,6 +12,52 @@ export const allowedProfileFonts = [
   'Arial, Helvetica, sans-serif'
 ];
 
+
+const SAFE_THEME_DEFAULTS = {
+  backgroundColor: '#d6e6f2',
+  textColor: '#111111',
+  boxColor: '#ffffff',
+  borderColor: '#336699',
+  headerColor: '#336699',
+  fontFamily: 'Arial',
+  backgroundRepeat: 'repeat',
+  backgroundSize: 'auto',
+  backgroundPosition: 'center'
+};
+
+const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const backgroundRepeatValues = new Set(['repeat', 'no-repeat', 'repeat-x', 'repeat-y']);
+const backgroundSizeValues = new Set(['auto', 'cover', 'contain']);
+const backgroundPositionValues = new Set(['center', 'top', 'bottom', 'left', 'right']);
+
+function normalizeHexColor(value, fallback) {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+
+  if (!HEX_COLOR_PATTERN.test(trimmed)) {
+    return fallback;
+  }
+
+  const hex = trimmed.toLowerCase();
+
+  if (hex.length === 4) {
+    return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+  }
+
+  return hex;
+}
+
+function safeOption(value, allowedValues, fallback) {
+  return allowedValues.has(value) ? value : fallback;
+}
+
+function safeFont(value) {
+  return allowedProfileFonts.includes(value) ? value : SAFE_THEME_DEFAULTS.fontFamily;
+}
+
 function formatProfileDate(value) {
   if (!value) {
     return '';
@@ -93,15 +139,15 @@ function mapProfileRow(row) {
       games: row.games || ''
     },
     theme: {
-      backgroundColor: row.theme_background_color,
-      textColor: row.theme_text_color,
-      boxColor: row.theme_box_color,
-      borderColor: row.theme_border_color,
-      headerColor: row.theme_header_color,
-      fontFamily: row.theme_font_family,
-      backgroundRepeat: row.theme_background_repeat || 'repeat',
-      backgroundSize: row.theme_background_size || 'auto',
-      backgroundPosition: row.theme_background_position || 'center'
+      backgroundColor: normalizeHexColor(row.theme_background_color, SAFE_THEME_DEFAULTS.backgroundColor),
+      textColor: normalizeHexColor(row.theme_text_color, SAFE_THEME_DEFAULTS.textColor),
+      boxColor: normalizeHexColor(row.theme_box_color, SAFE_THEME_DEFAULTS.boxColor),
+      borderColor: normalizeHexColor(row.theme_border_color, SAFE_THEME_DEFAULTS.borderColor),
+      headerColor: normalizeHexColor(row.theme_header_color, SAFE_THEME_DEFAULTS.headerColor),
+      fontFamily: safeFont(row.theme_font_family),
+      backgroundRepeat: safeOption(row.theme_background_repeat, backgroundRepeatValues, SAFE_THEME_DEFAULTS.backgroundRepeat),
+      backgroundSize: safeOption(row.theme_background_size, backgroundSizeValues, SAFE_THEME_DEFAULTS.backgroundSize),
+      backgroundPosition: safeOption(row.theme_background_position, backgroundPositionValues, SAFE_THEME_DEFAULTS.backgroundPosition)
     }
   };
 }
@@ -128,15 +174,15 @@ function mapEditableProfileRow(row) {
     commentPermission: row.comment_permission || 'everyone',
     bulletinVisibility: row.bulletin_visibility || 'public',
     friendRequestPermission: row.friend_request_permission || 'everyone',
-    themeBackgroundColor: row.theme_background_color || '#1a0f6d',
-    themeTextColor: row.theme_text_color || '#111111',
-    themeBoxColor: row.theme_box_color || '#f5fbff',
-    themeBorderColor: row.theme_border_color || '#003d9c',
-    themeHeaderColor: row.theme_header_color || '#004fbf',
-    themeFontFamily: row.theme_font_family || 'Arial',
-    themeBackgroundRepeat: row.theme_background_repeat || 'repeat',
-    themeBackgroundSize: row.theme_background_size || 'auto',
-    themeBackgroundPosition: row.theme_background_position || 'center'
+    themeBackgroundColor: normalizeHexColor(row.theme_background_color, SAFE_THEME_DEFAULTS.backgroundColor),
+    themeTextColor: normalizeHexColor(row.theme_text_color, SAFE_THEME_DEFAULTS.textColor),
+    themeBoxColor: normalizeHexColor(row.theme_box_color, SAFE_THEME_DEFAULTS.boxColor),
+    themeBorderColor: normalizeHexColor(row.theme_border_color, SAFE_THEME_DEFAULTS.borderColor),
+    themeHeaderColor: normalizeHexColor(row.theme_header_color, SAFE_THEME_DEFAULTS.headerColor),
+    themeFontFamily: safeFont(row.theme_font_family),
+    themeBackgroundRepeat: safeOption(row.theme_background_repeat, backgroundRepeatValues, SAFE_THEME_DEFAULTS.backgroundRepeat),
+    themeBackgroundSize: safeOption(row.theme_background_size, backgroundSizeValues, SAFE_THEME_DEFAULTS.backgroundSize),
+    themeBackgroundPosition: safeOption(row.theme_background_position, backgroundPositionValues, SAFE_THEME_DEFAULTS.backgroundPosition)
   };
 }
 

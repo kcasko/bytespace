@@ -20,7 +20,7 @@ import {
 
 const router = Router();
 
-const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 const textFieldLimits = {
   displayName: 50,
@@ -55,6 +55,22 @@ const optionFields = {
 
 function trimString(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function normalizeHexColor(value) {
+  const trimmed = trimString(value);
+
+  if (!HEX_COLOR_PATTERN.test(trimmed)) {
+    return null;
+  }
+
+  const hex = trimmed.toLowerCase();
+
+  if (hex.length === 4) {
+    return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`;
+  }
+
+  return hex;
 }
 
 
@@ -108,11 +124,13 @@ function validateProfileInput(body) {
   for (const field of colorFields) {
     const value = trimString(body[field]);
 
-    if (!HEX_COLOR_PATTERN.test(value)) {
-      return { error: `${field} must be a valid hex color like #336699.` };
+    const normalizedColor = normalizeHexColor(value);
+
+    if (!normalizedColor) {
+      return { error: `${field} must be a valid hex color like #336699 or #fff.` };
     }
 
-    input[field] = value;
+    input[field] = normalizedColor;
   }
 
   const themeFontFamily = trimString(body.themeFontFamily);

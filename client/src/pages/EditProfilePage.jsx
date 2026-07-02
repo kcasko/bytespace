@@ -11,14 +11,14 @@ function toAssetUrl(url) {
 }
 
 const fontOptions = [
-  'Arial',
-  'Verdana',
-  'Tahoma',
-  'Trebuchet MS',
-  'Georgia',
-  'Times New Roman',
-  'Courier New',
-  'Comic Sans MS'
+  { label: 'System Retro', value: 'Arial' },
+  { label: 'Verdana Classic', value: 'Verdana' },
+  { label: 'Trebuchet Web', value: 'Trebuchet MS' },
+  { label: 'Georgia Diary', value: 'Georgia' },
+  { label: 'Courier Terminal', value: 'Courier New' },
+  { label: 'Comic Sans Chaos', value: 'Comic Sans MS' },
+  { label: 'Tahoma Portal', value: 'Tahoma' },
+  { label: 'Times New Roman Zine', value: 'Times New Roman' }
 ];
 
 const emptyProfile = {
@@ -50,6 +50,7 @@ const emptyProfile = {
 const themePresets = [
   {
     name: 'Blue Classic',
+    description: 'Clean old-web profile energy.',
     values: {
       themeBackgroundColor: '#d6e6f2',
       themeTextColor: '#111111',
@@ -61,6 +62,7 @@ const themePresets = [
   },
   {
     name: 'Scene Kid Disaster',
+    description: 'Hot pink chaos in the best way.',
     values: {
       themeBackgroundColor: '#160016',
       themeTextColor: '#ff66cc',
@@ -72,6 +74,7 @@ const themePresets = [
   },
   {
     name: 'Cyber Rot',
+    description: 'Terminal slime and electric borders.',
     values: {
       themeBackgroundColor: '#050505',
       themeTextColor: '#00ff66',
@@ -83,6 +86,7 @@ const themePresets = [
   },
   {
     name: 'Mall Goth',
+    description: 'Dark, dramatic, and diary-coded.',
     values: {
       themeBackgroundColor: '#111111',
       themeTextColor: '#dddddd',
@@ -94,6 +98,7 @@ const themePresets = [
   },
   {
     name: 'VHS Static',
+    description: 'Gray tape hiss and analog dust.',
     values: {
       themeBackgroundColor: '#2b2b2b',
       themeTextColor: '#f2f2f2',
@@ -102,9 +107,10 @@ const themePresets = [
       themeHeaderColor: '#555555',
       themeFontFamily: 'Trebuchet MS'
     }
-  },,
+  },
   {
     name: 'Neon Mall',
+    description: 'Food court lights after midnight.',
     values: {
       themeBackgroundColor: '#10183d',
       themeTextColor: '#fff7fb',
@@ -116,6 +122,7 @@ const themePresets = [
   },
   {
     name: 'Vaporwave',
+    description: 'Chrome sunset, pastel modem hum.',
     values: {
       themeBackgroundColor: '#27104f',
       themeTextColor: '#ffe6ff',
@@ -127,6 +134,7 @@ const themePresets = [
   },
   {
     name: 'Terminal Green',
+    description: 'CRT glow for command-line souls.',
     values: {
       themeBackgroundColor: '#001100',
       themeTextColor: '#b8ffb8',
@@ -138,6 +146,7 @@ const themePresets = [
   },
   {
     name: 'Pink Glitter',
+    description: 'Bubblegum sparkle overload.',
     values: {
       themeBackgroundColor: '#ffe1f5',
       themeTextColor: '#33002a',
@@ -149,6 +158,7 @@ const themePresets = [
   },
   {
     name: 'Dark Arcade',
+    description: 'Cabinet glow and high-score menace.',
     values: {
       themeBackgroundColor: '#070915',
       themeTextColor: '#f5f5ff',
@@ -160,6 +170,7 @@ const themePresets = [
   },
   {
     name: 'Blue GeoCities',
+    description: 'Peak personal homepage blue.',
     values: {
       themeBackgroundColor: '#003399',
       themeTextColor: '#ffffff',
@@ -171,6 +182,7 @@ const themePresets = [
   },
   {
     name: 'LimeWire Infection',
+    description: 'Definitely downloaded from somewhere.',
     values: {
       themeBackgroundColor: '#001a00',
       themeTextColor: '#ccffcc',
@@ -198,6 +210,48 @@ const layoutPresetOptions = [
 
 function getLayoutPresetLabel(value) {
   return layoutPresetOptions.find((option) => option.value === value)?.label || 'Classic';
+}
+
+
+function getThemePresetName(profile) {
+  const match = themePresets.find((preset) => (
+    preset.values.themeBackgroundColor === profile.themeBackgroundColor
+    && preset.values.themeTextColor === profile.themeTextColor
+    && preset.values.themeBoxColor === profile.themeBoxColor
+    && preset.values.themeBorderColor === profile.themeBorderColor
+    && preset.values.themeHeaderColor === profile.themeHeaderColor
+    && preset.values.themeFontFamily === profile.themeFontFamily
+  ));
+
+  return match?.name || 'Custom Mix';
+}
+
+function fontLabelForValue(value) {
+  return fontOptions.find((font) => font.value === value)?.label || 'System Retro';
+}
+
+function ThemePresetCard({ preset, active, onClick }) {
+  const colors = [
+    preset.values.themeBackgroundColor,
+    preset.values.themeTextColor,
+    preset.values.themeBoxColor,
+    preset.values.themeBorderColor,
+    preset.values.themeHeaderColor
+  ];
+
+  return (
+    <button
+      type="button"
+      className={`theme-preset-card ${active ? 'theme-preset-card--active' : ''}`}
+      onClick={onClick}
+    >
+      <strong>{preset.name}</strong>
+      <span>{preset.description}</span>
+      <span className="theme-swatch-row" aria-hidden="true">
+        {colors.map((color) => <i key={color} style={{ backgroundColor: color }} />)}
+      </span>
+    </button>
+  );
 }
 
 function TextInput({ label, name, value, onChange, multiline = false }) {
@@ -539,61 +593,73 @@ export default function EditProfilePage({ currentUser }) {
         <aside className="editor-panel">
           <h2>Profile Theme</h2>
 
-          <div className="editor-aside-fields">
+          <div className="editor-aside-fields theme-control-panel">
             <p className="editor-helper">Preset changes are preview-only until you hit Save Profile.</p>
-            <p className="editor-helper">Raw CSS is not available yet because we are not handing a raccoon a flamethrower.</p>
+            <p className="editor-helper">Theme controls are safe presets, hex colors, allowed fonts, and background dropdowns only. No raw CSS or HTML.</p>
 
-            <div className="theme-preset-grid" aria-label="Theme presets">
-              {themePresets.map((preset) => (
-                <button
-                  key={preset.name}
-                  type="button"
-                  className="theme-preset-button"
-                  onClick={() => applyTheme(preset.values)}
-                >
-                  {preset.name}
-                </button>
-              ))}
-            </div>
-
-            <button type="button" className="reset-theme-button" onClick={resetTheme}>
-              Reset Theme
-            </button>
-
-            <ThemeColor label="Background color" name="themeBackgroundColor" value={profile.themeBackgroundColor} onChange={updateField} />
-            <ThemeColor label="Text color" name="themeTextColor" value={profile.themeTextColor} onChange={updateField} />
-            <ThemeColor label="Box color" name="themeBoxColor" value={profile.themeBoxColor} onChange={updateField} />
-            <ThemeColor label="Border color" name="themeBorderColor" value={profile.themeBorderColor} onChange={updateField} />
-            <ThemeColor label="Header color" name="themeHeaderColor" value={profile.themeHeaderColor} onChange={updateField} />
-            <label>
-              Font family
-              <select name="themeFontFamily" value={profile.themeFontFamily} onChange={updateField}>
-                {fontOptions.map((font) => (
-                  <option key={font} value={font}>{font}</option>
+            <section className="theme-control-group">
+              <h3>Theme preset</h3>
+              <div className="theme-preset-grid" aria-label="Theme presets">
+                {themePresets.map((preset) => (
+                  <ThemePresetCard
+                    key={preset.name}
+                    preset={preset}
+                    active={getThemePresetName(profile) === preset.name}
+                    onClick={() => applyTheme(preset.values)}
+                  />
                 ))}
-              </select>
-            </label>
-            <SelectInput
-              label="Background repeat"
-              name="themeBackgroundRepeat"
-              value={profile.themeBackgroundRepeat}
-              options={backgroundRepeatOptions}
-              onChange={updateField}
-            />
-            <SelectInput
-              label="Background size"
-              name="themeBackgroundSize"
-              value={profile.themeBackgroundSize}
-              options={backgroundSizeOptions}
-              onChange={updateField}
-            />
-            <SelectInput
-              label="Background position"
-              name="themeBackgroundPosition"
-              value={profile.themeBackgroundPosition}
-              options={backgroundPositionOptions}
-              onChange={updateField}
-            />
+              </div>
+
+              <button type="button" className="reset-theme-button" onClick={resetTheme}>
+                Reset Theme
+              </button>
+            </section>
+
+            <section className="theme-control-group">
+              <h3>Colors</h3>
+              <ThemeColor label="Background" name="themeBackgroundColor" value={profile.themeBackgroundColor} onChange={updateField} />
+              <ThemeColor label="Text" name="themeTextColor" value={profile.themeTextColor} onChange={updateField} />
+              <ThemeColor label="Box/Card" name="themeBoxColor" value={profile.themeBoxColor} onChange={updateField} />
+              <ThemeColor label="Border" name="themeBorderColor" value={profile.themeBorderColor} onChange={updateField} />
+              <ThemeColor label="Header/Accent" name="themeHeaderColor" value={profile.themeHeaderColor} onChange={updateField} />
+            </section>
+
+            <section className="theme-control-group">
+              <h3>Font</h3>
+              <label>
+                Font family
+                <select name="themeFontFamily" value={profile.themeFontFamily} onChange={updateField}>
+                  {fontOptions.map((font) => (
+                    <option key={font.value} value={font.value}>{font.label}</option>
+                  ))}
+                </select>
+              </label>
+            </section>
+
+            <section className="theme-control-group">
+              <h3>Background image behavior</h3>
+              <SelectInput
+                label="Background repeat"
+                name="themeBackgroundRepeat"
+                value={profile.themeBackgroundRepeat}
+                options={backgroundRepeatOptions}
+                onChange={updateField}
+              />
+              <SelectInput
+                label="Background size"
+                name="themeBackgroundSize"
+                value={profile.themeBackgroundSize}
+                options={backgroundSizeOptions}
+                onChange={updateField}
+              />
+              <SelectInput
+                label="Background position"
+                name="themeBackgroundPosition"
+                value={profile.themeBackgroundPosition}
+                options={backgroundPositionOptions}
+                onChange={updateField}
+              />
+            </section>
           </div>
 
           <div
@@ -610,7 +676,9 @@ export default function EditProfilePage({ currentUser }) {
             }}
           >
             <h3 style={{ background: profile.themeHeaderColor }}>Live Profile Preview</h3>
-            <p className="profile-preview-layout-label">Layout: {getLayoutPresetLabel(profile.layoutPreset)}</p>
+            <p className="profile-preview-layout-label">
+              Layout: {getLayoutPresetLabel(profile.layoutPreset)} | Theme: {getThemePresetName(profile)} | Font: {fontLabelForValue(profile.themeFontFamily)}
+            </p>
             <div className="profile-preview-identity" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               {previewAvatarUrl ? (
                 <img

@@ -718,6 +718,32 @@ Validation:
 Security reminders: keep `/opt/bytespace/server/.env` private, do not add music file uploads, do not host copyrighted audio, and do not store secrets in profile music fields.
 
 
+## v3.3 Theme Customization Polish Notes
+
+ByteSpace v3.3 is a safe theme editor polish pass. It changes editor UI, server validation, and public theme sanitization. It does not change Nginx Proxy Manager, UFW, PostgreSQL credentials, backups, invite-only registration, admin permissions, reports, audit logs, notifications, or production environment files.
+
+Theme controls remain allowlisted:
+
+- colors: validated hex only, with shorthand normalized server-side
+- fonts: safe allowlist only
+- background repeat: `repeat`, `no-repeat`, `repeat-x`, `repeat-y`
+- background size: `auto`, `cover`, `contain`
+- background position: `center`, `top`, `bottom`, `left`, `right`
+
+The editor now shows preset preview cards with color swatches and selected state. Public profiles apply sanitized values only; unknown or older invalid values fall back to safe defaults. Raw CSS, raw HTML, JavaScript, arbitrary embeds, and arbitrary style property editing remain unavailable.
+
+Deployment verification remains:
+
+```bash
+cd /opt/bytespace
+npm run build
+sudo systemctl restart bytespace
+curl -i https://bytespace.casko.dev/api/health
+curl -i https://bytespace.casko.dev/api/db/health
+```
+
+Safety reminders: do not print, copy, edit, or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`. Do not commit AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
+
 ## v3.2 Profile Layout Customization Notes
 
 ByteSpace v3.2 adds preset-only profile layout customization. It changes the app schema and frontend CSS, but does not change Nginx Proxy Manager, UFW, PostgreSQL credentials, backups, invite-only registration, admin permissions, reports, audit logs, or notifications.
