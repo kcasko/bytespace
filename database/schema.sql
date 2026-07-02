@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   display_name VARCHAR(80),
   headline VARCHAR(255),
   mood VARCHAR(120),
+  status_message TEXT,
   about_me TEXT,
   who_id_like_to_meet TEXT,
   general_interests TEXT,

@@ -35,6 +35,7 @@ const emptyProfile = {
   displayName: '',
   headline: '',
   mood: '',
+  statusMessage: '',
   aboutMe: '',
   whoIdLikeToMeet: '',
   generalInterests: '',
@@ -109,6 +110,72 @@ const themePresets = [
       themeBorderColor: '#999999',
       themeHeaderColor: '#555555',
       themeFontFamily: 'Trebuchet MS'
+    }
+  },,
+  {
+    name: 'Neon Mall',
+    values: {
+      themeBackgroundColor: '#10183d',
+      themeTextColor: '#fff7fb',
+      themeBoxColor: '#171f52',
+      themeBorderColor: '#ff4fd8',
+      themeHeaderColor: '#008cff',
+      themeFontFamily: 'Trebuchet MS'
+    }
+  },
+  {
+    name: 'Vaporwave',
+    values: {
+      themeBackgroundColor: '#27104f',
+      themeTextColor: '#ffe6ff',
+      themeBoxColor: '#3b1b70',
+      themeBorderColor: '#00e5ff',
+      themeHeaderColor: '#ff66cc',
+      themeFontFamily: 'Verdana'
+    }
+  },
+  {
+    name: 'Terminal Green',
+    values: {
+      themeBackgroundColor: '#001100',
+      themeTextColor: '#b8ffb8',
+      themeBoxColor: '#061806',
+      themeBorderColor: '#00cc44',
+      themeHeaderColor: '#003d16',
+      themeFontFamily: 'Courier New'
+    }
+  },
+  {
+    name: 'Pink Glitter',
+    values: {
+      themeBackgroundColor: '#ffe1f5',
+      themeTextColor: '#33002a',
+      themeBoxColor: '#fff8fd',
+      themeBorderColor: '#ff4fbd',
+      themeHeaderColor: '#c4007a',
+      themeFontFamily: 'Comic Sans MS'
+    }
+  },
+  {
+    name: 'Dark Arcade',
+    values: {
+      themeBackgroundColor: '#070915',
+      themeTextColor: '#f5f5ff',
+      themeBoxColor: '#101426',
+      themeBorderColor: '#ffcc00',
+      themeHeaderColor: '#7a00ff',
+      themeFontFamily: 'Tahoma'
+    }
+  },
+  {
+    name: 'Blue GeoCities',
+    values: {
+      themeBackgroundColor: '#003399',
+      themeTextColor: '#ffffff',
+      themeBoxColor: '#e8f3ff',
+      themeBorderColor: '#ffff00',
+      themeHeaderColor: '#000080',
+      themeFontFamily: 'Arial'
     }
   },
   {
@@ -401,6 +468,7 @@ export default function EditProfilePage({ currentUser }) {
             <TextInput label="Display Name" name="displayName" value={profile.displayName} onChange={updateField} />
             <TextInput label="Headline" name="headline" value={profile.headline} onChange={updateField} />
             <TextInput label="Mood" name="mood" value={profile.mood} onChange={updateField} />
+            <TextInput label="Status Message" name="statusMessage" value={profile.statusMessage} onChange={updateField} />
           </fieldset>
 
           <fieldset>
@@ -513,16 +581,20 @@ export default function EditProfilePage({ currentUser }) {
           >
             <h3 style={{ background: profile.themeHeaderColor }}>Live Profile Preview</h3>
             <div className="profile-preview-identity" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
-              {previewAvatarUrl && (
+              {previewAvatarUrl ? (
                 <img
                   src={previewAvatarUrl}
                   alt={`${profile.displayName || currentUser.username} preview`}
                   className="profile-preview-avatar"
                 />
+              ) : (
+                <div className="profile-preview-avatar-placeholder">No Avatar</div>
               )}
               <div>
                 <strong>{profile.displayName || currentUser.username}</strong>
+                <span>@{currentUser.username}</span>
                 <p><b>Mood:</b> {profile.mood || 'mysterious'}</p>
+                <p><b>Status:</b> {profile.statusMessage || 'typing a mysterious away message...'}</p>
               </div>
             </div>
             <div className="profile-preview-box" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>

@@ -26,6 +26,7 @@ const textFieldLimits = {
   displayName: 50,
   headline: 160,
   mood: 80,
+  statusMessage: 120,
   aboutMe: 2000,
   whoIdLikeToMeet: 2000,
   generalInterests: 1000,

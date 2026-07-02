@@ -25,14 +25,32 @@ function formatProfileDate(value) {
   }).format(new Date(value));
 }
 
+function buildProfileBadges(row) {
+  const joinedAt = row.user_created_at ? new Date(row.user_created_at) : null;
+  const joinedRecently = joinedAt
+    ? Date.now() - joinedAt.getTime() < 14 * 24 * 60 * 60 * 1000
+    : false;
+
+  return {
+    admin: Boolean(row.is_admin),
+    newMember: joinedRecently,
+    founder: Number(row.user_id) <= 10
+  };
+}
+
 function mapProfileRow(row) {
   return {
+    userId: row.user_id,
     username: row.username,
     displayName: row.display_name || row.username,
     headline: row.headline || '',
     mood: row.mood || '',
+    statusMessage: row.status_message || '',
     lastLogin: '06/30/2006 11:48 PM',
     online: true,
+    joinedAt: row.user_created_at || null,
+    joinedDate: formatProfileDate(row.user_created_at),
+    badges: buildProfileBadges(row),
     profileImageUrl: row.profile_image_url || '',
     backgroundImageUrl: row.background_image_url || '',
     profileSongTitle: row.profile_song_title || '',
@@ -66,6 +84,7 @@ function mapEditableProfileRow(row) {
     displayName: row.display_name || '',
     headline: row.headline || '',
     mood: row.mood || '',
+    statusMessage: row.status_message || '',
     aboutMe: row.about_me || '',
     whoIdLikeToMeet: row.who_id_like_to_meet || '',
     generalInterests: row.general_interests || '',
@@ -97,35 +116,37 @@ export async function getOwnProfileByUserId(userId) {
   const result = await query(
     `
       SELECT
-        display_name,
-        headline,
-        mood,
-        about_me,
-        who_id_like_to_meet,
-        general_interests,
-        music,
-        movies,
-        games,
-        profile_image_url,
-        background_image_url,
-        profile_song_title,
-        profile_song_artist,
-        profile_song_url,
-        profile_visibility,
-        comment_permission,
-        bulletin_visibility,
-        friend_request_permission,
-        theme_background_color,
-        theme_text_color,
-        theme_box_color,
-        theme_border_color,
-        theme_header_color,
-        theme_font_family,
-        theme_background_repeat,
-        theme_background_size,
-        theme_background_position
+        profiles.display_name,
+        profiles.headline,
+        profiles.mood,
+        profile_status_messages.status_message,
+        profiles.about_me,
+        profiles.who_id_like_to_meet,
+        profiles.general_interests,
+        profiles.music,
+        profiles.movies,
+        profiles.games,
+        profiles.profile_image_url,
+        profiles.background_image_url,
+        profiles.profile_song_title,
+        profiles.profile_song_artist,
+        profiles.profile_song_url,
+        profiles.profile_visibility,
+        profiles.comment_permission,
+        profiles.bulletin_visibility,
+        profiles.friend_request_permission,
+        profiles.theme_background_color,
+        profiles.theme_text_color,
+        profiles.theme_box_color,
+        profiles.theme_border_color,
+        profiles.theme_header_color,
+        profiles.theme_font_family,
+        profiles.theme_background_repeat,
+        profiles.theme_background_size,
+        profiles.theme_background_position
       FROM profiles
-      WHERE user_id = $1
+      LEFT JOIN profile_status_messages ON profile_status_messages.user_id = profiles.user_id
+      WHERE profiles.user_id = $1
     `,
     [userId]
   );
@@ -218,7 +239,21 @@ export async function updateOwnProfile(userId, profileInput) {
     return null;
   }
 
-  return mapEditableProfileRow(result.rows[0]);
+  await query(
+    `
+      INSERT INTO profile_status_messages (user_id, status_message, updated_at)
+      VALUES ($1, $2, NOW())
+      ON CONFLICT (user_id) DO UPDATE SET
+        status_message = EXCLUDED.status_message,
+        updated_at = NOW()
+    `,
+    [userId, profileInput.statusMessage]
+  );
+
+  return mapEditableProfileRow({
+    ...result.rows[0],
+    status_message: profileInput.statusMessage
+  });
 }
 
 export async function getProfileByUsername(username) {
@@ -227,9 +262,12 @@ export async function getProfileByUsername(username) {
       SELECT
         users.id AS user_id,
         users.username,
+        users.created_at AS user_created_at,
+        users.is_admin,
         profiles.display_name,
         profiles.headline,
         profiles.mood,
+        profile_status_messages.status_message,
         profiles.about_me,
         profiles.who_id_like_to_meet,
         profiles.general_interests,
@@ -252,6 +290,7 @@ export async function getProfileByUsername(username) {
         profiles.theme_background_position
       FROM users
       INNER JOIN profiles ON profiles.user_id = users.id
+      LEFT JOIN profile_status_messages ON profile_status_messages.user_id = users.id
       WHERE LOWER(users.username) = LOWER($1)
     `,
     [username]
@@ -265,7 +304,7 @@ export async function getProfileByUsername(username) {
   const userId = row.user_id;
   const profile = mapProfileRow(row);
 
-  const [topFriendsResult, commentsResult, bulletinsResult] = await Promise.all([
+  const [topFriendsResult, commentsResult, bulletinsResult, friendCountResult, bulletinCountResult] = await Promise.all([
     query(
       `
         SELECT
@@ -311,6 +350,33 @@ export async function getProfileByUsername(username) {
         LIMIT 5
       `,
       [userId]
+    ),
+    query(
+      `
+        SELECT COUNT(*)::int AS count
+        FROM friendships
+        INNER JOIN users friend_users ON friend_users.id = CASE
+          WHEN friendships.requester_id = $1 THEN friendships.receiver_id
+          ELSE friendships.requester_id
+        END
+        WHERE (friendships.requester_id = $1 OR friendships.receiver_id = $1)
+          AND friendships.status = 'accepted'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM blocked_users
+            WHERE (blocker_id = $1 AND blocked_id = friend_users.id)
+               OR (blocker_id = friend_users.id AND blocked_id = $1)
+          )
+      `,
+      [userId]
+    ),
+    query(
+      `
+        SELECT COUNT(*)::int AS count
+        FROM bulletins
+        WHERE user_id = $1
+      `,
+      [userId]
     )
   ]);
 
@@ -328,6 +394,12 @@ export async function getProfileByUsername(username) {
       body: comment.body,
       date: formatProfileDate(comment.created_at)
     })),
+    stats: {
+      friendCount: friendCountResult.rows[0]?.count || 0,
+      commentCount: commentsResult.rowCount,
+      bulletinCount: bulletinCountResult.rows[0]?.count || 0,
+      joinedDate: profile.joinedDate
+    },
     bulletins: bulletinsResult.rows.map((bulletin) => ({
       title: bulletin.title,
       date: formatProfileDate(bulletin.created_at)

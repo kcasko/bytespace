@@ -1581,6 +1581,27 @@ GET /api/admin/audit-logs/:id
 
 Supported filters: `limit`, `action`, `targetType`, and `adminUsername`.
 
+
+### v2.8 Profile Polish and Retro Customization
+
+ByteSpace profiles now include a short plain-text status message, public profile stats, and display-only badges. Users edit the status message from `/profile/edit`; it is capped at 120 characters and rendered as normal React text.
+
+Public profile polish:
+
+- Status line near the profile header and sidebar identity.
+- Stats box for accepted friend count, guestbook comment count, bulletin count, and joined date.
+- Display-only badges for admins, new members, and founder/early users.
+- Clearer empty states for guestbook comments, Top 8, bulletins, and missing avatar/background images.
+- Extra retro theme presets: Neon Mall, Vaporwave, Terminal Green, Pink Glitter, Dark Arcade, and Blue GeoCities.
+
+Schema/runtime notes:
+
+- Fresh schema includes `profiles.status_message TEXT`.
+- The production app also creates `profile_status_messages` at startup as an app-owned compatibility store when an existing database user cannot alter the original `profiles` table.
+- Badges are derived server-side from `users.is_admin`, `users.created_at`, and low user IDs. Users cannot self-assign badges.
+
+Safety notes: status messages and other user profile text are plain text only. ByteSpace still does not support raw custom CSS, untrusted HTML, or profile script injection. Do not commit `.env`, invite codes, database URLs, backups, or moderation exports.
+
 ## Next Pass
 
 The next pass should continue tightening social profile workflows and production operations.

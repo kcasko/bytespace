@@ -647,6 +647,26 @@ BYTESPACE_S3_ENABLED=false
 
 S3 retention should be handled by an S3 Lifecycle rule deleting `bytespace/` objects older than 7 days. The script only enforces 7-day local retention in `/opt/bytespace-backups`.
 
+
+## v2.8 Profile Polish Notes
+
+ByteSpace v2.8 adds profile polish without changing deployment topology:
+
+- `profiles.status_message TEXT` is part of the fresh schema.
+- Existing production databases may also use the app-owned `profile_status_messages` table created at startup when the deployed app user cannot alter `profiles`.
+- Users edit status messages from `/profile/edit`; the server validates a 120 character maximum.
+- Public profiles show a status line, stats box, and display-only badges.
+- Badges are server-derived: admin, new member, and founder/early user.
+- Additional theme presets are available in the profile editor: Neon Mall, Vaporwave, Terminal Green, Pink Glitter, Dark Arcade, and Blue GeoCities.
+
+Operational reminders:
+
+- Restart `bytespace.service` after deploying server changes.
+- Confirm `/api/health` and `/api/db/health` locally and externally.
+- Keep `/opt/bytespace/server/.env` private. Do not print, commit, or copy it into docs.
+- Do not commit backup artifacts from `/opt/bytespace-backups` or generated upload archives.
+- Profile text remains plain React text; raw HTML and raw custom CSS are intentionally unavailable.
+
 ## 14. Rollback Plan
 
 Use git tags.

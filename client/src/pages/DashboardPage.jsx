@@ -118,6 +118,7 @@ export default function DashboardPage({ currentUser }) {
               <h2>Welcome back, {displayName}</h2>
               {profile.headline && <p className="dashboard-headline">{profile.headline}</p>}
               <p><b>Mood:</b> {profile.mood || 'mysteriously blank'}</p>
+              <p><b>Status:</b> {profile.statusMessage || 'No status posted yet.'}</p>
               <div className="dashboard-actions">
                 <Link to={`/profile/${dashboard.user.username}`}>View My Profile</Link>
                 <Link to="/profile/edit">Edit Profile</Link>

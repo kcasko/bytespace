@@ -36,6 +36,47 @@ function Box({ title, children, className = '' }) {
   );
 }
 
+
+function ProfileBadges({ badges = {} }) {
+  const items = [
+    badges.admin && 'Admin',
+    badges.founder && 'Founder',
+    badges.newMember && 'New Member'
+  ].filter(Boolean);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="profile-badges" aria-label="Profile badges">
+      {items.map((item) => <span key={item}>{item}</span>)}
+    </div>
+  );
+}
+
+function ProfileStats({ stats = {} }) {
+  const statItems = [
+    ['Friends', stats.friendCount ?? 0],
+    ['Comments', stats.commentCount ?? 0],
+    ['Bulletins', stats.bulletinCount ?? 0],
+    ['Joined', stats.joinedDate || 'mysterious era']
+  ];
+
+  return (
+    <Box title="Profile Stats" className="profile-stats-box">
+      <div className="profile-stats-grid">
+        {statItems.map(([label, value]) => (
+          <div key={label}>
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </div>
+        ))}
+      </div>
+    </Box>
+  );
+}
+
 function ContactBox({ displayName }) {
   const actions = ['Add Friend', 'Send Message', 'Add Favorite'];
 
@@ -59,16 +100,21 @@ function Sidebar({ profile, currentUser }) {
           src={toAssetUrl(profile.profileImageUrl) || fallbackProfileImage}
           alt={`${profile.displayName} profile`}
         />
+        {!profile.profileImageUrl && <div className="profile-avatar-empty">No avatar uploaded yet. Mystery silhouette mode.</div>}
         <div className="identity">
           <strong>{profile.displayName}</strong>
           <span>@{profile.username}</span>
         </div>
-        <p><b>Mood:</b> {profile.mood}</p>
+        <ProfileBadges badges={profile.badges} />
+        <p><b>Mood:</b> {profile.mood || 'unlisted'}</p>
+        {profile.statusMessage && <p className="profile-status-message"><b>Status:</b> {profile.statusMessage}</p>}
         <p><b>Last Login:</b> {profile.lastLogin}</p>
         {profile.online && <div className="online-badge">Online Now!</div>}
       </Box>
 
       <ContactBox displayName={profile.displayName} />
+
+      <ProfileStats stats={profile.stats} />
 
       {currentUser?.username !== profile.username && (
         <Box title="Safety">
@@ -101,7 +147,7 @@ function TopFriends({ friends }) {
   return (
     <Box title="Top 8">
       {friends.length === 0 ? (
-        <div className="friend-empty-note">This user has not weaponized friendship rankings yet.</div>
+        <div className="friend-empty-note">No Top 8 yet. The ranking drama machine is idle.</div>
       ) : (
         <div className="friends-grid">
           {friends.map((friend, index) => {
@@ -236,7 +282,9 @@ function Comments({ comments, currentUser, profileUsername, onCommentPosted }) {
         <div className="comment-login-prompt">Log in to leave a comment in the guestbook.</div>
       )}
       <div className="comments-list">
-        {comments.map((comment) => (
+        {comments.length === 0 ? (
+          <div className="friend-empty-note">No guestbook comments yet. Be the first to scribble on the wall.</div>
+        ) : comments.map((comment) => (
           <article
             className="comment"
             key={comment.id || `${comment.author}-${comment.date || comment.createdAt}-${comment.body}`}
@@ -264,7 +312,7 @@ function Bulletins({ bulletins, currentUser }) {
   return (
     <Box title="Bulletin Board">
       {bulletins.length === 0 ? (
-        <div className="friend-empty-note">No bulletins yet. The glitter void remains silent.</div>
+        <div className="friend-empty-note">No bulletins yet. The glitter void remains silent and slightly dial-up.</div>
       ) : (
         <div className="profile-bulletins-list">
           {bulletins.slice(0, 5).map((bulletin) => (
@@ -443,7 +491,7 @@ export default function ProfilePage({ currentUser }) {
       style={{ ...themeStyle, ...backgroundImageStyle }}
     >
       <div className="status-strip">
-        <marquee>BYTE ALERT: Keith updated his mood and may be operating on caffeine and spite.</marquee>
+        <marquee>BYTE ALERT: {profile.displayName} says {profile.statusMessage || profile.mood || 'the profile signal is alive'}.</marquee>
       </div>
 
       <div className="layout-grid">
@@ -455,7 +503,12 @@ export default function ProfilePage({ currentUser }) {
           <div className="profile-hero">
             <p className="profile-kicker">Public Profile</p>
             <h1>{profile.profileTitle}</h1>
+            <ProfileBadges badges={profile.badges} />
+            {profile.statusMessage && <p className="profile-status-hero">{profile.statusMessage}</p>}
             <p>{profile.headline}</p>
+            {!profile.backgroundImageUrl && (
+              <div className="profile-background-empty">No custom background yet. Default wallpaper energy engaged.</div>
+            )}
             {currentUser && currentUser.username !== profile.username && (
               <button type="button" className="profile-block-button" onClick={handleBlockUser}>
                 Block User

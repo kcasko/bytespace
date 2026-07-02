@@ -17,6 +17,29 @@ export async function ensureOperationalSchema() {
   }
 
 
+  try {
+    await query(`
+      ALTER TABLE profiles
+        ADD COLUMN IF NOT EXISTS status_message TEXT
+    `);
+  } catch (error) {
+    if (error.code !== '42501') {
+      throw error;
+    }
+
+    console.warn('Skipping profiles status-message migration because the app database user is not the table owner.');
+  }
+
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS profile_status_messages (
+      user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      status_message TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+
   await query(`
     CREATE TABLE IF NOT EXISTS admin_audit_logs (
       id SERIAL PRIMARY KEY,

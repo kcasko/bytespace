@@ -52,9 +52,10 @@ export async function getDashboardForUser(userId) {
     ),
     query(
       `
-        SELECT display_name, headline, mood, profile_image_url, background_image_url
+        SELECT profiles.display_name, profiles.headline, profiles.mood, profile_status_messages.status_message, profiles.profile_image_url, profiles.background_image_url
         FROM profiles
-        WHERE user_id = $1
+        LEFT JOIN profile_status_messages ON profile_status_messages.user_id = profiles.user_id
+        WHERE profiles.user_id = $1
         LIMIT 1
       `,
       [userId]
@@ -232,6 +233,7 @@ export async function getDashboardForUser(userId) {
       displayName: profile.display_name || user.username,
       headline: profile.headline || '',
       mood: profile.mood || '',
+      statusMessage: profile.status_message || '',
       profileImageUrl: profile.profile_image_url || '',
       backgroundImageUrl: profile.background_image_url || ''
     },
