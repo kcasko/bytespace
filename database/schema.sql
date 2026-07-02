@@ -120,6 +120,19 @@ CREATE TABLE IF NOT EXISTS content_reports (
   )
 );
 
+
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+  id SERIAL PRIMARY KEY,
+  admin_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  action VARCHAR(80) NOT NULL,
+  target_type VARCHAR(40) NOT NULL,
+  target_id INTEGER,
+  target_username VARCHAR(40),
+  summary TEXT NOT NULL,
+  metadata_json JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS "session" (
   sid VARCHAR NOT NULL PRIMARY KEY,
   sess JSON NOT NULL,
@@ -141,3 +154,7 @@ CREATE INDEX IF NOT EXISTS content_reports_status_idx ON content_reports(status)
 CREATE UNIQUE INDEX IF NOT EXISTS content_reports_open_unique_idx
   ON content_reports (reporter_id, target_type, COALESCE(target_id, -1), COALESCE(LOWER(target_username), ''))
   WHERE status = 'open';
+CREATE INDEX IF NOT EXISTS admin_audit_logs_created_at_idx ON admin_audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_admin_user_id_idx ON admin_audit_logs(admin_user_id);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_action_idx ON admin_audit_logs(action);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_target_type_idx ON admin_audit_logs(target_type);

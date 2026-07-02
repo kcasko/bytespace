@@ -11,6 +11,7 @@ import {
   suspendUserByUsername,
   unsuspendUserByUsername
 } from '../db/adminQueries.js';
+import { getAdminAuditLogById, getAdminAuditLogs, writeAdminAuditLog } from '../db/auditQueries.js';
 import { getReportById, getReports, reportStatuses, updateReportStatus } from '../db/reportQueries.js';
 import { requireAdmin } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
@@ -27,6 +28,43 @@ function parseLimit(value, fallback = 25, max = 100) {
   return Math.min(parsed, max);
 }
 
+
+router.get('/audit-logs', async (req, res) => {
+  try {
+    const logs = await getAdminAuditLogs({
+      limit: parseLimit(req.query?.limit, 50, 100),
+      action: typeof req.query?.action === 'string' ? req.query.action.trim() : '',
+      targetType: typeof req.query?.targetType === 'string' ? req.query.targetType.trim() : '',
+      adminUsername: typeof req.query?.adminUsername === 'string' ? req.query.adminUsername.trim() : ''
+    });
+
+    return res.json({ logs });
+  } catch (error) {
+    console.error('Failed to load audit logs:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Audit logs unavailable.' });
+  }
+});
+
+router.get('/audit-logs/:id', async (req, res) => {
+  const auditLogId = Number(req.params.id);
+
+  if (!Number.isInteger(auditLogId) || auditLogId <= 0) {
+    return res.status(400).json({ error: 'Audit log ID is invalid.' });
+  }
+
+  try {
+    const log = await getAdminAuditLogById(auditLogId);
+
+    if (!log) {
+      return res.status(404).json({ error: 'Audit log not found.' });
+    }
+
+    return res.json({ log });
+  } catch (error) {
+    console.error('Failed to load audit log:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Audit log unavailable.' });
+  }
+});
 
 router.get('/reports', async (req, res) => {
   const status = typeof req.query?.status === 'string' ? req.query.status.trim() : '';
@@ -92,6 +130,16 @@ router.put('/reports/:id/status', async (req, res) => {
       return res.status(404).json({ error: 'Report not found.' });
     }
 
+    await writeAdminAuditLog({
+      adminUserId: req.session.user.id,
+      action: 'update_report_status',
+      targetType: 'report',
+      targetId: report.id,
+      targetUsername: report.targetUsername || null,
+      summary: `Admin ${req.session.user.username} marked report ${report.id} as ${status}.`,
+      metadata: { status, hasAdminNote: Boolean(adminNote) }
+    });
+
     return res.json({ report });
   } catch (error) {
     console.error('Failed to update report:', { code: error.code, message: error.message });
@@ -146,11 +194,22 @@ router.put('/users/:username/suspend', async (req, res) => {
       }
     }
 
-    const suspended = await suspendUserByUsername(user.username, req.body?.reason || '');
+    const suspensionReason = req.body?.reason || '';
+    const suspended = await suspendUserByUsername(user.username, suspensionReason);
 
     if (!suspended) {
       return res.status(404).json({ error: 'User not found.' });
     }
+
+    await writeAdminAuditLog({
+      adminUserId: req.session.user.id,
+      action: 'suspend_user',
+      targetType: 'user',
+      targetId: user.id,
+      targetUsername: user.username,
+      summary: `Admin ${req.session.user.username} suspended user ${user.username}.`,
+      metadata: { hasReason: Boolean(String(suspensionReason || '').trim()) }
+    });
 
     const updatedUser = await getUserDetail(user.username);
     return res.json({ user: updatedUser });
@@ -173,6 +232,15 @@ router.put('/users/:username/unsuspend', async (req, res) => {
     if (!unsuspended) {
       return res.status(404).json({ error: 'User not found.' });
     }
+
+    await writeAdminAuditLog({
+      adminUserId: req.session.user.id,
+      action: 'unsuspend_user',
+      targetType: 'user',
+      targetId: user.id,
+      targetUsername: user.username,
+      summary: `Admin ${req.session.user.username} unsuspended user ${user.username}.`
+    });
 
     const updatedUser = await getUserDetail(user.username);
     return res.json({ user: updatedUser });
@@ -226,6 +294,14 @@ router.delete('/comments/:id', async (req, res) => {
       return res.status(404).json({ error: 'Comment not found.' });
     }
 
+    await writeAdminAuditLog({
+      adminUserId: req.session.user.id,
+      action: 'delete_comment',
+      targetType: 'comment',
+      targetId: commentId,
+      summary: `Admin ${req.session.user.username} deleted comment ${commentId}.`
+    });
+
     return res.json({ status: 'ok' });
   } catch (error) {
     console.error('Failed to delete comment:', { code: error.code, message: error.message });
@@ -246,6 +322,14 @@ router.delete('/bulletins/:id', async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ error: 'Bulletin not found.' });
     }
+
+    await writeAdminAuditLog({
+      adminUserId: req.session.user.id,
+      action: 'delete_bulletin',
+      targetType: 'bulletin',
+      targetId: bulletinId,
+      summary: `Admin ${req.session.user.username} deleted bulletin ${bulletinId}.`
+    });
 
     return res.json({ status: 'ok' });
   } catch (error) {

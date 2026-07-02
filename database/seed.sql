@@ -50,6 +50,24 @@ CREATE TABLE IF NOT EXISTS blocked_users (
 CREATE INDEX IF NOT EXISTS blocked_users_blocker_id_idx ON blocked_users(blocker_id);
 CREATE INDEX IF NOT EXISTS blocked_users_blocked_id_idx ON blocked_users(blocked_id);
 
+
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+  id SERIAL PRIMARY KEY,
+  admin_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  action VARCHAR(80) NOT NULL,
+  target_type VARCHAR(40) NOT NULL,
+  target_id INTEGER,
+  target_username VARCHAR(40),
+  summary TEXT NOT NULL,
+  metadata_json JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS admin_audit_logs_created_at_idx ON admin_audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_admin_user_id_idx ON admin_audit_logs(admin_user_id);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_action_idx ON admin_audit_logs(action);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_target_type_idx ON admin_audit_logs(target_type);
+
 CREATE TABLE IF NOT EXISTS content_reports (
   id SERIAL PRIMARY KEY,
   reporter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

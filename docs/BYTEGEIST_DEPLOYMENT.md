@@ -471,6 +471,24 @@ Allowed report statuses are `open`, `reviewed`, `dismissed`, and `action_taken`.
 
 The app verifies the reporting schema at startup with safe `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS` statements. Do not print, copy, or commit `/opt/bytespace/server/.env`. Do not commit backup artifacts, report exports, invite codes, database URLs, or moderation dumps.
 
+### Admin Audit Logs
+
+ByteSpace v2.7 records moderation actions in `admin_audit_logs`. Admins can review logs at `/admin` or through:
+
+```text
+GET /api/admin/audit-logs
+GET /api/admin/audit-logs/:id
+```
+
+Logged actions include suspending users, unsuspending users, deleting comments, deleting bulletins, and changing report status/admin notes. The audit table stores admin id, action, target type, target id or username, summary, sanitized metadata, and creation time.
+
+Security notes:
+
+- Audit APIs require backend admin authorization.
+- Logs must not contain invite codes, session secrets, database URLs, password hashes, raw `.env` values, or full request bodies.
+- `/opt/bytespace/server/.env` remains private and must not be printed, copied, or committed.
+- Do not commit backups, moderation exports, or audit dumps.
+
 ## 12. Smoke Tests
 
 Server checks:

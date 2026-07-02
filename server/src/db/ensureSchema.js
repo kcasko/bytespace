@@ -16,6 +16,26 @@ export async function ensureOperationalSchema() {
     console.warn('Skipping users admin-column migration because the app database user is not the table owner.');
   }
 
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS admin_audit_logs (
+      id SERIAL PRIMARY KEY,
+      admin_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      action VARCHAR(80) NOT NULL,
+      target_type VARCHAR(40) NOT NULL,
+      target_id INTEGER,
+      target_username VARCHAR(40),
+      summary TEXT NOT NULL,
+      metadata_json JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await query('CREATE INDEX IF NOT EXISTS admin_audit_logs_created_at_idx ON admin_audit_logs(created_at DESC)');
+  await query('CREATE INDEX IF NOT EXISTS admin_audit_logs_admin_user_id_idx ON admin_audit_logs(admin_user_id)');
+  await query('CREATE INDEX IF NOT EXISTS admin_audit_logs_action_idx ON admin_audit_logs(action)');
+  await query('CREATE INDEX IF NOT EXISTS admin_audit_logs_target_type_idx ON admin_audit_logs(target_type)');
+
   await query(`
     CREATE TABLE IF NOT EXISTS content_reports (
       id SERIAL PRIMARY KEY,

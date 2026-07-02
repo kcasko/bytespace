@@ -76,3 +76,13 @@ export function updateReportStatus(id, { status, adminNote = '' }) {
     body: JSON.stringify({ status, adminNote })
   });
 }
+
+
+export function getAuditLogs({ action = '', targetType = '', limit = 50 } = {}) {
+  const params = new URLSearchParams();
+  if (action) params.set('action', action);
+  if (targetType) params.set('targetType', targetType);
+  if (limit) params.set('limit', String(limit));
+  const query = params.toString();
+  return adminFetch(`/api/admin/audit-logs${query ? `?${query}` : ''}`);
+}

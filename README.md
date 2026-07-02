@@ -1558,6 +1558,29 @@ Schema addition: `content_reports`, with reporter, target type/id or username, r
 
 Do not commit `.env`, invite codes, database URLs, backup files, report exports, or moderation data dumps. The production `.env` remains private.
 
+### v2.7 Admin Audit Logs
+
+ByteSpace records admin moderation actions in `admin_audit_logs` so the site owner can see who did what, when, and why. Audit entries include the admin user, action, target type, target id or username, summary, optional sanitized metadata, and timestamp.
+
+Logged actions:
+
+- `suspend_user`
+- `unsuspend_user`
+- `delete_comment`
+- `delete_bulletin`
+- `update_report_status`
+
+Admins view logs from `/admin` or the admin-only API. Logged-out users receive `401`; non-admin users receive `403`. Audit metadata is intentionally small and sanitized. Do not log invite codes, session secrets, database URLs, password hashes, raw environment values, full request bodies, or other secrets.
+
+Admin audit routes:
+
+```text
+GET /api/admin/audit-logs
+GET /api/admin/audit-logs/:id
+```
+
+Supported filters: `limit`, `action`, `targetType`, and `adminUsername`.
+
 ## Next Pass
 
 The next pass should continue tightening social profile workflows and production operations.

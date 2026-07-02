@@ -9,7 +9,8 @@ import {
   getAdminReports,
   suspendUser,
   unsuspendUser,
-  updateReportStatus
+  updateReportStatus,
+  getAuditLogs
 } from '../api/adminApi.js';
 
 function formatDate(value) {
@@ -23,10 +24,13 @@ export default function AdminPage({ currentUser }) {
   const [recentComments, setRecentComments] = useState([]);
   const [recentBulletins, setRecentBulletins] = useState([]);
   const [reports, setReports] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [query, setQuery] = useState('');
   const [reason, setReason] = useState('');
   const [reportStatusFilter, setReportStatusFilter] = useState('open');
   const [adminNote, setAdminNote] = useState('');
+  const [auditActionFilter, setAuditActionFilter] = useState('');
+  const [auditTargetFilter, setAuditTargetFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -36,12 +40,13 @@ export default function AdminPage({ currentUser }) {
     setError('');
 
     try {
-      const [usersData, signupsData, commentsData, bulletinsData, reportsData] = await Promise.all([
+      const [usersData, signupsData, commentsData, bulletinsData, reportsData, auditData] = await Promise.all([
         getAdminUsers(search),
         getRecentSignups(),
         getRecentComments(),
         getRecentBulletins(),
-        getAdminReports(reportStatusFilter)
+        getAdminReports(reportStatusFilter),
+        getAuditLogs({ action: auditActionFilter, targetType: auditTargetFilter })
       ]);
 
       setUsers(usersData.users || []);
@@ -49,6 +54,7 @@ export default function AdminPage({ currentUser }) {
       setRecentComments(commentsData.comments || []);
       setRecentBulletins(bulletinsData.bulletins || []);
       setReports(reportsData.reports || []);
+      setAuditLogs(auditData.logs || []);
     } catch (err) {
       setError(err.message || 'Admin panel unavailable.');
     } finally {
@@ -166,6 +172,50 @@ export default function AdminPage({ currentUser }) {
       </section>
 
 
+
+
+
+      <section className="content-panel">
+        <h2>Audit Log</h2>
+        <div className="inline-form">
+          <label>
+            Action
+            <select value={auditActionFilter} onChange={(event) => setAuditActionFilter(event.target.value)}>
+              <option value="">All actions</option>
+              <option value="suspend_user">Suspend user</option>
+              <option value="unsuspend_user">Unsuspend user</option>
+              <option value="delete_comment">Delete comment</option>
+              <option value="delete_bulletin">Delete bulletin</option>
+              <option value="update_report_status">Update report status</option>
+            </select>
+          </label>
+          <label>
+            Target
+            <select value={auditTargetFilter} onChange={(event) => setAuditTargetFilter(event.target.value)}>
+              <option value="">All targets</option>
+              <option value="user">User</option>
+              <option value="comment">Comment</option>
+              <option value="bulletin">Bulletin</option>
+              <option value="report">Report</option>
+            </select>
+          </label>
+          <button type="button" onClick={() => loadAdminData(query)}>Refresh Audit</button>
+        </div>
+        <div className="admin-list">
+          {auditLogs.map((log) => (
+            <article className="admin-item" key={log.id}>
+              <div>
+                <strong>{log.action}</strong> by @{log.adminUsername || 'unknown'}
+                <p>{log.summary}</p>
+                <p>Target: {log.targetType} {log.targetUsername ? `@${log.targetUsername}` : log.targetId || ''}</p>
+                {log.metadata && <small>Metadata: {JSON.stringify(log.metadata)}</small>}
+              </div>
+              <small>{formatDate(log.createdAt)}</small>
+            </article>
+          ))}
+          {auditLogs.length === 0 && <p>No audit logs for this filter.</p>}
+        </div>
+      </section>
 
       <section className="content-panel">
         <h2>Reports</h2>
