@@ -23,7 +23,7 @@ export default function LoginPage({ onAuth }) {
     try {
       const data = await login(form);
       onAuth(data.user);
-      navigate(`/profile/${data.user.username}`);
+      navigate(data.user.onboardingCompletedAt ? `/profile/${data.user.username}` : '/welcome');
     } catch (err) {
       setError(err.message);
     } finally {

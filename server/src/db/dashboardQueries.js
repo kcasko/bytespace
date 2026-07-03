@@ -1,6 +1,27 @@
 import { query } from './pool.js';
 
 let layoutPresetColumnAvailable = null;
+let onboardingColumnsAvailable = null;
+
+async function hasOnboardingColumns() {
+  if (onboardingColumnsAvailable !== null) {
+    return onboardingColumnsAvailable;
+  }
+
+  const result = await query(
+    `
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'users'
+        AND column_name = 'onboarding_completed_at'
+      LIMIT 1
+    `
+  );
+
+  onboardingColumnsAvailable = result.rowCount > 0;
+  return onboardingColumnsAvailable;
+}
 
 async function hasLayoutPresetColumn() {
   if (layoutPresetColumnAvailable !== null) {
@@ -60,6 +81,7 @@ function mapCommentRow(row) {
 
 export async function getDashboardForUser(userId) {
   const hasLayoutPreset = await hasLayoutPresetColumn();
+  const hasOnboarding = await hasOnboardingColumns();
   const [
     userResult,
     profileResult,
@@ -70,7 +92,7 @@ export async function getDashboardForUser(userId) {
   ] = await Promise.all([
     query(
       `
-        SELECT id, username
+        SELECT id, username, ${hasOnboarding ? 'onboarding_completed_at, last_seen_onboarding_step' : 'NULL AS onboarding_completed_at, NULL AS last_seen_onboarding_step'}
         FROM users
         WHERE id = $1
         LIMIT 1
@@ -254,6 +276,11 @@ export async function getDashboardForUser(userId) {
     user: {
       id: user.id,
       username: user.username
+    },
+    onboarding: {
+      isComplete: hasOnboarding ? Boolean(user.onboarding_completed_at) : true,
+      completedAt: hasOnboarding ? user.onboarding_completed_at || null : null,
+      currentStep: hasOnboarding ? user.last_seen_onboarding_step || null : null
     },
     profile: {
       displayName: profile.display_name || user.username,

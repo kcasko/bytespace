@@ -1,10 +1,16 @@
 ALTER TABLE users
   ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
   ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS suspension_reason TEXT;
+  ADD COLUMN IF NOT EXISTS suspension_reason TEXT,
+  ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS last_seen_onboarding_step VARCHAR(40);
 
 UPDATE users
 SET is_admin = COALESCE(is_admin, FALSE);
+
+UPDATE users
+SET onboarding_completed_at = COALESCE(onboarding_completed_at, created_at);
+
 
 UPDATE users
 SET username = 'lacutis',

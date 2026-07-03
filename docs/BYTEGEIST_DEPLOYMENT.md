@@ -718,6 +718,26 @@ Validation:
 Security reminders: keep `/opt/bytespace/server/.env` private, do not add music file uploads, do not host copyrighted audio, and do not store secrets in profile music fields.
 
 
+
+## v3.6 Onboarding Welcome Flow Notes
+
+ByteSpace v3.6 adds a simple logged-in onboarding flow at `/welcome` plus onboarding API routes under `/api/onboarding`. The flow is invite-friendly and explains profile setup, themes, layouts, section ordering, profile music, browsing, friends, bulletins, notifications, reporting, blocking, and privacy settings.
+
+Schema additions:
+
+* `users.onboarding_completed_at TIMESTAMPTZ`
+* `users.last_seen_onboarding_step VARCHAR(40)`
+
+Routes:
+
+* `GET /api/onboarding/status`
+* `PUT /api/onboarding/complete`
+* `PUT /api/onboarding/step`
+
+Existing users should be backfilled as completed so production accounts are not forced through onboarding. New invited registrations start incomplete and can finish onboarding from `/welcome`; skipping the flow does not mark it complete. If the production database user cannot alter `users`, run the documented schema update manually as the database owner and restart `bytespace`.
+
+This release does not change invite-only registration, admin permissions, reporting, audit logs, notifications, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, AWS configuration, or production environment files. Do not print or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`.
+
 ## v3.5 Profile Section Ordering Notes
 
 ByteSpace v3.5 adds safe, preset section ordering for public profiles. It adds `profiles.section_order JSONB` for existing deployments with `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` when the database user has permission. If a deployment has not been migrated yet, runtime code falls back to the default order.

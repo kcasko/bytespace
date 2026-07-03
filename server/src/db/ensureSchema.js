@@ -6,7 +6,9 @@ export async function ensureOperationalSchema() {
       ALTER TABLE users
         ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE,
         ADD COLUMN IF NOT EXISTS suspended_at TIMESTAMPTZ,
-        ADD COLUMN IF NOT EXISTS suspension_reason TEXT
+        ADD COLUMN IF NOT EXISTS suspension_reason TEXT,
+        ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS last_seen_onboarding_step VARCHAR(40)
     `);
   } catch (error) {
     if (error.code !== '42501') {

@@ -1682,6 +1682,26 @@ URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must 
 Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
 
 
+
+### v3.6 Onboarding Welcome Flow
+
+ByteSpace v3.6 adds a guided first-run welcome flow for newly invited users. New users can visit `/welcome` after registration or login to get a short tour of profiles, themes, layouts, section ordering, profile music, browsing, friends, bulletins, notifications, and safety tools.
+
+Schema additions on `users`:
+
+* `onboarding_completed_at TIMESTAMPTZ`
+* `last_seen_onboarding_step VARCHAR(40)`
+
+API routes:
+
+* `GET /api/onboarding/status` returns the logged-in user's onboarding state.
+* `PUT /api/onboarding/complete` marks onboarding complete for the logged-in user.
+* `PUT /api/onboarding/step` stores the last viewed onboarding step.
+
+Existing users are treated as already onboarded during schema/seed backfill so established accounts are not forced through the flow. New registrations remain incomplete until the user finishes onboarding. The dashboard shows a Getting Started checklist while onboarding is incomplete, and users can skip the tour without marking it complete.
+
+Safety notes: onboarding routes require login, users can only update their own onboarding state, no invite code is exposed, no admin-only data is exposed, and all text is rendered as normal React text. Production `.env` and `/etc/bytespace/backup.env` remain private and must never be committed or printed.
+
 ### v3.5 Profile Section Ordering
 
 ByteSpace v3.5 lets users choose the order of major public profile sections from `/profile/edit`. The section order is stored as `profiles.section_order JSONB` when the column exists, and the server falls back to the default order for missing or legacy data.

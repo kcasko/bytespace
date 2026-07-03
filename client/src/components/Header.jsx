@@ -57,6 +57,7 @@ export default function Header({ currentUser, onLogout }) {
                 Notifications
                 {unreadCount > 0 && <span className="notification-nav-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
               </Link>
+              {currentUser.onboardingCompletedAt === null && <Link to="/welcome">Welcome</Link>}
               <Link to="/profile/edit">Edit Profile</Link>
               <Link to="/settings">Settings</Link>
               {currentUser.isAdmin && <Link to="/admin">Admin</Link>}

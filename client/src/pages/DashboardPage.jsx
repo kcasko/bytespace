@@ -134,6 +134,25 @@ export default function DashboardPage({ currentUser }) {
             </div>
           </section>
 
+
+          {dashboard.onboarding && !dashboard.onboarding.isComplete && (
+            <section className="dashboard-section onboarding-checklist">
+              <h2>Getting Started</h2>
+              <p>Finish the ByteSpace orientation tape when you are ready. Nothing is locked, but this map helps.</p>
+              <ul>
+                <li><Link to="/profile/edit">Edit your profile</Link></li>
+                <li>Add a status message</li>
+                <li>Pick a theme</li>
+                <li>Pick a layout</li>
+                <li>Add profile music</li>
+                <li><Link to="/browse">Browse profiles</Link></li>
+                <li><Link to="/bulletins">Post a bulletin</Link></li>
+                <li><Link to="/welcome">Review safety and reporting tools</Link></li>
+              </ul>
+              <Link className="dashboard-section-link" to="/welcome">Open Welcome Flow</Link>
+            </section>
+          )}
+
           <section className="dashboard-section dashboard-quick-actions">
             <h2>Quick Actions</h2>
             <div>

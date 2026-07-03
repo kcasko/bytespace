@@ -14,6 +14,7 @@ import NotificationsPage from './pages/NotificationsPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
+import WelcomePage from './pages/WelcomePage.jsx';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/settings" element={<SettingsPage currentUser={currentUser} />} />
         <Route path="/profile/:username" element={<ProfilePage currentUser={currentUser} />} />
         <Route path="/notifications" element={<NotificationsPage currentUser={currentUser} />} />
+        <Route path="/welcome" element={<WelcomePage currentUser={currentUser} />} />
         <Route path="/login" element={<LoginPage onAuth={setCurrentUser} />} />
         <Route path="/register" element={<RegisterPage onAuth={setCurrentUser} />} />
       </Routes>

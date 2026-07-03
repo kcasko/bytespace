@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
   is_admin BOOLEAN NOT NULL DEFAULT FALSE,
   suspended_at TIMESTAMPTZ,
   suspension_reason TEXT,
+  onboarding_completed_at TIMESTAMPTZ,
+  last_seen_onboarding_step VARCHAR(40),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

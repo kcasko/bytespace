@@ -58,7 +58,9 @@ function safeUser(user) {
     username: user.username,
     email: user.email,
     isAdmin: Boolean(user.is_admin ?? user.isAdmin),
-    suspendedAt: user.suspended_at || user.suspendedAt || null
+    suspendedAt: user.suspended_at || user.suspendedAt || null,
+    onboardingCompletedAt: user.onboarding_completed_at || user.onboardingCompletedAt || null,
+    lastSeenOnboardingStep: user.last_seen_onboarding_step || user.lastSeenOnboardingStep || null
   };
 }
 
@@ -194,7 +196,7 @@ export async function login(req, res) {
     try {
       userResult = await query(
         `
-          SELECT id, username, email, password_hash, is_admin, suspended_at
+          SELECT id, username, email, password_hash, is_admin, suspended_at, onboarding_completed_at, last_seen_onboarding_step
           FROM users
           WHERE LOWER(username) = $1 OR LOWER(email) = $1
           LIMIT 1
@@ -208,7 +210,7 @@ export async function login(req, res) {
 
       userResult = await query(
         `
-          SELECT id, username, email, password_hash
+          SELECT id, username, email, password_hash, is_admin, suspended_at
           FROM users
           WHERE LOWER(username) = $1 OR LOWER(email) = $1
           LIMIT 1

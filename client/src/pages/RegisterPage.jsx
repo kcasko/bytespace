@@ -25,7 +25,7 @@ export default function RegisterPage({ onAuth }) {
     try {
       const data = await register(form);
       onAuth(data.user);
-      navigate(`/profile/${data.user.username}`);
+      navigate('/welcome');
     } catch (err) {
       const message = err.message || 'Registration failed.';
       if (message.toLowerCase().includes('invite')) {
