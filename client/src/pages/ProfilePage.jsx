@@ -590,6 +590,7 @@ export default function ProfilePage({ currentUser }) {
             <ProfileBadges badges={profile.badges} />
             {profile.statusMessage && <p className="profile-status-hero">{profile.statusMessage}</p>}
             <p>{profile.headline}</p>
+            <Link className="profile-discover-link" to="/browse">Discover more profiles</Link>
             {!profile.backgroundImageUrl && (
               <div className="profile-background-empty">No custom background yet. Default wallpaper energy engaged.</div>
             )}

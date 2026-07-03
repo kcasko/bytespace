@@ -1684,6 +1684,26 @@ Safe YouTube previews are supported only for known YouTube watch/share/short/emb
 
 
 
+
+### v3.8 Profile Discovery Polish
+
+ByteSpace v3.8 improves `/browse` into a safer retro profile directory. Users can search by username, display name, or status message, and the search state is reflected in query parameters such as `/browse?q=keith`.
+
+Discovery controls:
+
+* Sort by Newest, Recently Updated, or Username A-Z.
+* Filter to profiles with profile music.
+* Filter to profiles with a status message.
+* Empty search returns the normal browse directory.
+
+The existing public endpoint `GET /api/users/search` now accepts safe allowlisted parameters: `q`, `sort`, `hasMusic`, and `hasStatus`. Invalid sort values return a clear error. Results are limited and use parameterized SQL.
+
+Profile cards expose public-safe fields only: avatar, display name, username, headline, mood, status message, layout hint, joined/updated dates, profile music indicator, friend count, friend status, and profile link. Suspended users are excluded from browse results. The endpoint does not return email, password hashes, invite data, reports, audit logs, session data, or admin-only metadata.
+
+Public profiles also include a subtle link back to Browse. Mobile browse controls stack cleanly and cards avoid horizontal overflow.
+
+Safety notes: invite-only registration, admin checks, reports, audit logs, notifications, backups, and production environment files are unchanged. `/opt/bytespace/server/.env` and `/etc/bytespace/backup.env` remain private.
+
 ### v3.7 Admin Moderation Polish
 
 ByteSpace v3.7 polishes the admin dashboard at `/admin` without changing public auth behavior or exposing admin data. The page now uses clearer moderation sections for Overview, Reports, Users, Audit Logs, Recent Signups, Recent Comments, and Recent Bulletins.

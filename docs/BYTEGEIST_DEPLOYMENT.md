@@ -720,6 +720,32 @@ Security reminders: keep `/opt/bytespace/server/.env` private, do not add music 
 
 
 
+
+## v3.8 Profile Discovery Polish Notes
+
+ByteSpace v3.8 improves `/browse` and the existing public/session-aware user search route. It does not change invite-only registration, admin permissions, reports, audit logs, notifications, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, AWS configuration, or production environment files.
+
+Updated endpoint:
+
+* `GET /api/users/search?q=&sort=&hasMusic=&hasStatus=`
+
+Supported sort values:
+
+* `newest`
+* `updated`
+* `username`
+
+Filters:
+
+* `hasMusic=true`
+* `hasStatus=true`
+
+The route searches username, display name, and status message. It excludes suspended users, hides blocked relationships for logged-in users as before, limits results, validates sort values server-side, and returns public-safe profile card fields only. It must not expose email, password hashes, invite codes, reports, audit logs, sessions, secrets, or admin-only metadata.
+
+The browse page now has a stronger retro directory layout, query-param-backed search, sort/filter controls, a small New Around Here strip, richer public profile cards, and mobile-friendly stacking. Public profiles include a subtle Discover more profiles link back to `/browse`.
+
+Do not print or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`.
+
 ## v3.7 Admin Moderation Polish Notes
 
 ByteSpace v3.7 improves `/admin` usability while preserving existing server-side admin authorization. The admin dashboard now has scannable cards for Overview, Reports, Users, Audit Logs, Recent Signups, Recent Comments, and Recent Bulletins.
