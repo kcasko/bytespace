@@ -27,6 +27,7 @@ const emptyProfile = {
   mood: '',
   statusMessage: '',
   layoutPreset: 'classic',
+  sectionOrder: ['about', 'interests', 'music', 'friends', 'bulletins', 'comments'],
   aboutMe: '',
   whoIdLikeToMeet: '',
   generalInterests: '',
@@ -198,6 +199,38 @@ const blueClassicTheme = themePresets[0].values;
 const backgroundRepeatOptions = ['repeat', 'no-repeat', 'repeat-x', 'repeat-y'];
 const backgroundSizeOptions = ['auto', 'cover', 'contain'];
 const backgroundPositionOptions = ['center', 'top', 'bottom', 'left', 'right'];
+
+
+const defaultSectionOrder = ['about', 'interests', 'music', 'friends', 'bulletins', 'comments'];
+const sectionLabels = {
+  about: 'About Me',
+  interests: 'Interests',
+  music: 'Now Playing',
+  friends: 'Friends / Top 8',
+  bulletins: 'Bulletins',
+  comments: 'Comments'
+};
+
+function normalizeSectionOrder(value) {
+  const source = Array.isArray(value) ? value : [];
+  const seen = new Set();
+  const normalized = [];
+
+  for (const item of source) {
+    if (defaultSectionOrder.includes(item) && !seen.has(item)) {
+      normalized.push(item);
+      seen.add(item);
+    }
+  }
+
+  for (const item of defaultSectionOrder) {
+    if (!seen.has(item)) {
+      normalized.push(item);
+    }
+  }
+
+  return normalized;
+}
 
 const layoutPresetOptions = [
   { value: 'classic', label: 'Classic', description: 'The default ByteSpace profile grid with sidebar and main chaos.' },
@@ -420,7 +453,7 @@ export default function EditProfilePage({ currentUser }) {
         const profileData = await getMyProfile();
 
         if (!ignore) {
-          setProfile({ ...emptyProfile, ...profileData });
+          setProfile({ ...emptyProfile, ...profileData, sectionOrder: normalizeSectionOrder(profileData.sectionOrder) });
           setCurrentAvatarUrl(profileData.profileImageUrl || '');
           setCurrentBackgroundUrl(profileData.backgroundImageUrl || '');
           setStatus('ready');
@@ -462,6 +495,29 @@ export default function EditProfilePage({ currentUser }) {
       themeBackgroundSize: 'auto',
       themeBackgroundPosition: 'center'
     });
+  }
+
+  function moveSection(index, direction) {
+    setProfile((current) => {
+      const order = normalizeSectionOrder(current.sectionOrder);
+      const nextIndex = index + direction;
+
+      if (nextIndex < 0 || nextIndex >= order.length) {
+        return current;
+      }
+
+      const nextOrder = [...order];
+      [nextOrder[index], nextOrder[nextIndex]] = [nextOrder[nextIndex], nextOrder[index]];
+      return { ...current, sectionOrder: nextOrder };
+    });
+    setMessage('');
+    setError('');
+  }
+
+  function resetSectionOrder() {
+    setProfile((current) => ({ ...current, sectionOrder: defaultSectionOrder }));
+    setMessage('');
+    setError('');
   }
 
   async function saveProfile(event) {
@@ -573,6 +629,23 @@ export default function EditProfilePage({ currentUser }) {
                 </button>
               ))}
             </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Profile Sections</legend>
+            <p className="editor-helper">Choose the order for major profile sections. This is safe ordering only, not freeform HTML or custom code.</p>
+            <div className="section-order-list" aria-label="Profile section order">
+              {normalizeSectionOrder(profile.sectionOrder).map((sectionKey, index) => (
+                <div className="section-order-item" key={sectionKey}>
+                  <span>{index + 1}. {sectionLabels[sectionKey]}</span>
+                  <div>
+                    <button type="button" onClick={() => moveSection(index, -1)} disabled={index === 0}>Up</button>
+                    <button type="button" onClick={() => moveSection(index, 1)} disabled={index === normalizeSectionOrder(profile.sectionOrder).length - 1}>Down</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="reset-theme-button" onClick={resetSectionOrder}>Reset Section Order</button>
           </fieldset>
 
           <fieldset>
@@ -699,6 +772,14 @@ export default function EditProfilePage({ currentUser }) {
             <div className="profile-preview-box" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               <strong>{profile.headline || 'Your headline goes here.'}</strong>
               <p>{profile.aboutMe || 'About Me preview text will show up here as you type.'}</p>
+            </div>
+            <div className="profile-preview-box" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
+              <strong>Section Order</strong>
+              <div className="section-stack-preview">
+                {normalizeSectionOrder(profile.sectionOrder).map((sectionKey) => (
+                  <span key={sectionKey}>{sectionLabels[sectionKey]}</span>
+                ))}
+              </div>
             </div>
             <div className="profile-preview-box profile-song-preview" style={{ background: profile.themeBoxColor, borderColor: profile.themeBorderColor }}>
               <strong>Now Playing</strong>

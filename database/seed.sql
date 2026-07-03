@@ -23,6 +23,7 @@ ALTER TABLE profiles
   ADD COLUMN IF NOT EXISTS theme_background_position VARCHAR(20) NOT NULL DEFAULT 'center',
   ADD COLUMN IF NOT EXISTS status_message TEXT,
   ADD COLUMN IF NOT EXISTS layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic',
+  ADD COLUMN IF NOT EXISTS section_order JSONB,
   ADD COLUMN IF NOT EXISTS profile_song_title VARCHAR(120),
   ADD COLUMN IF NOT EXISTS profile_song_artist VARCHAR(120),
   ADD COLUMN IF NOT EXISTS profile_song_url VARCHAR(500),
@@ -42,7 +43,8 @@ SET theme_background_repeat = COALESCE(NULLIF(theme_background_repeat, ''), 'rep
     layout_preset = CASE
       WHEN layout_preset IN ('classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight') THEN layout_preset
       ELSE 'classic'
-    END;
+    END,
+    section_order = COALESCE(section_order, '["about","interests","music","friends","bulletins","comments"]'::jsonb);
 
 CREATE TABLE IF NOT EXISTS blocked_users (
   id SERIAL PRIMARY KEY,

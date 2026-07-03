@@ -1682,6 +1682,23 @@ URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must 
 Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
 
 
+### v3.5 Profile Section Ordering
+
+ByteSpace v3.5 lets users choose the order of major public profile sections from `/profile/edit`. The section order is stored as `profiles.section_order JSONB` when the column exists, and the server falls back to the default order for missing or legacy data.
+
+Allowed section keys:
+
+- `about`
+- `interests`
+- `music`
+- `friends`
+- `bulletins`
+- `comments`
+
+The editor uses Up/Down buttons plus Reset to Default. Missing sections are appended in default order for resilience. Unknown section keys and duplicate keys are rejected server-side. Public profiles render the same existing sections in the saved order; no arbitrary component names, raw HTML, raw CSS, JavaScript, or custom labels are accepted. Layout presets and mobile stacking remain compatible.
+
+Do not print or commit `/opt/bytespace/server/.env`, `/etc/bytespace/backup.env`, AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
+
 ### v3.4 Public Landing Page Polish
 
 ByteSpace v3.4 improves the logged-out homepage while preserving the logged-in dashboard at `/`. The public landing page now explains ByteSpace as an invite-only retro social profile space with custom profiles, themes, layouts, profile music, friends, Top 8, bulletins, comments, notifications, and safety tools.

@@ -1,5 +1,30 @@
 import { query } from './pool.js';
 
+
+export const defaultSectionOrder = ['about', 'interests', 'music', 'friends', 'bulletins', 'comments'];
+export const allowedSectionKeys = new Set(defaultSectionOrder);
+
+export function normalizeSectionOrder(value) {
+  const source = Array.isArray(value) ? value : [];
+  const seen = new Set();
+  const normalized = [];
+
+  for (const item of source) {
+    if (allowedSectionKeys.has(item) && !seen.has(item)) {
+      normalized.push(item);
+      seen.add(item);
+    }
+  }
+
+  for (const item of defaultSectionOrder) {
+    if (!seen.has(item)) {
+      normalized.push(item);
+    }
+  }
+
+  return normalized;
+}
+
 export const allowedProfileFonts = [
   'Arial',
   'Verdana',
@@ -84,11 +109,11 @@ function buildProfileBadges(row) {
   };
 }
 
-let layoutPresetColumnAvailable = null;
+const profileColumnAvailability = new Map();
 
-async function hasLayoutPresetColumn() {
-  if (layoutPresetColumnAvailable !== null) {
-    return layoutPresetColumnAvailable;
+async function hasProfileColumn(columnName) {
+  if (profileColumnAvailability.has(columnName)) {
+    return profileColumnAvailability.get(columnName);
   }
 
   const result = await query(
@@ -97,17 +122,23 @@ async function hasLayoutPresetColumn() {
       FROM information_schema.columns
       WHERE table_schema = 'public'
         AND table_name = 'profiles'
-        AND column_name = 'layout_preset'
+        AND column_name = $1
       LIMIT 1
-    `
+    `,
+    [columnName]
   );
 
-  layoutPresetColumnAvailable = result.rowCount > 0;
-  return layoutPresetColumnAvailable;
+  const available = result.rowCount > 0;
+  profileColumnAvailability.set(columnName, available);
+  return available;
 }
 
 function layoutPresetSelect(hasColumn) {
   return hasColumn ? 'profiles.layout_preset' : `'classic' AS layout_preset`;
+}
+
+function sectionOrderSelect(hasColumn) {
+  return hasColumn ? 'profiles.section_order' : `'["about", "interests", "music", "friends", "bulletins", "comments"]'::jsonb AS section_order`;
 }
 
 function mapProfileRow(row) {
@@ -119,6 +150,7 @@ function mapProfileRow(row) {
     mood: row.mood || '',
     statusMessage: row.status_message || '',
     layoutPreset: row.layout_preset || 'classic',
+    sectionOrder: normalizeSectionOrder(row.section_order),
     lastLogin: '06/30/2006 11:48 PM',
     online: true,
     joinedAt: row.user_created_at || null,
@@ -159,6 +191,7 @@ function mapEditableProfileRow(row) {
     mood: row.mood || '',
     statusMessage: row.status_message || '',
     layoutPreset: row.layout_preset || 'classic',
+    sectionOrder: normalizeSectionOrder(row.section_order),
     aboutMe: row.about_me || '',
     whoIdLikeToMeet: row.who_id_like_to_meet || '',
     generalInterests: row.general_interests || '',
@@ -187,7 +220,8 @@ function mapEditableProfileRow(row) {
 }
 
 export async function getOwnProfileByUserId(userId) {
-  const hasLayoutPreset = await hasLayoutPresetColumn();
+  const hasLayoutPreset = await hasProfileColumn('layout_preset');
+  const hasSectionOrder = await hasProfileColumn('section_order');
   const result = await query(
     `
       SELECT
@@ -196,6 +230,7 @@ export async function getOwnProfileByUserId(userId) {
         profiles.mood,
         profiles.status_message,
         ${layoutPresetSelect(hasLayoutPreset)},
+        ${sectionOrderSelect(hasSectionOrder)},
         profiles.about_me,
         profiles.who_id_like_to_meet,
         profiles.general_interests,
@@ -234,37 +269,9 @@ export async function getOwnProfileByUserId(userId) {
 }
 
 export async function updateOwnProfile(userId, profileInput) {
-  const hasLayoutPreset = await hasLayoutPresetColumn();
-  const layoutUpdate = hasLayoutPreset ? 'layout_preset = $6,' : '';
-  const layoutReturn = hasLayoutPreset ? 'layout_preset,' : `'classic' AS layout_preset,`;
-  const values = [
-    userId,
-    profileInput.displayName,
-    profileInput.headline,
-    profileInput.mood,
-    profileInput.statusMessage,
-    ...(hasLayoutPreset ? [profileInput.layoutPreset || 'classic'] : []),
-    profileInput.aboutMe,
-    profileInput.whoIdLikeToMeet,
-    profileInput.generalInterests,
-    profileInput.music,
-    profileInput.movies,
-    profileInput.games,
-    profileInput.themeBackgroundColor,
-    profileInput.themeTextColor,
-    profileInput.themeBoxColor,
-    profileInput.themeBorderColor,
-    profileInput.themeHeaderColor,
-    profileInput.themeFontFamily,
-    profileInput.themeBackgroundRepeat,
-    profileInput.themeBackgroundSize,
-    profileInput.themeBackgroundPosition,
-    profileInput.profileSongTitle,
-    profileInput.profileSongArtist,
-    profileInput.profileSongUrl
-  ];
-  const offset = hasLayoutPreset ? 0 : -1;
-  const param = (index) => `$${index + offset}`;
+  const hasSectionOrder = await hasProfileColumn('section_order');
+  const sectionUpdate = hasSectionOrder ? 'section_order = $25::jsonb,' : '';
+  const sectionReturn = hasSectionOrder ? 'section_order,' : `'["about", "interests", "music", "friends", "bulletins", "comments"]'::jsonb AS section_order,`;
 
   const result = await query(
     `
@@ -274,25 +281,26 @@ export async function updateOwnProfile(userId, profileInput) {
         headline = $3,
         mood = $4,
         status_message = $5,
-        ${layoutUpdate}
-        about_me = ${param(7)},
-        who_id_like_to_meet = ${param(8)},
-        general_interests = ${param(9)},
-        music = ${param(10)},
-        movies = ${param(11)},
-        games = ${param(12)},
-        theme_background_color = ${param(13)},
-        theme_text_color = ${param(14)},
-        theme_box_color = ${param(15)},
-        theme_border_color = ${param(16)},
-        theme_header_color = ${param(17)},
-        theme_font_family = ${param(18)},
-        theme_background_repeat = ${param(19)},
-        theme_background_size = ${param(20)},
-        theme_background_position = ${param(21)},
-        profile_song_title = ${param(22)},
-        profile_song_artist = ${param(23)},
-        profile_song_url = ${param(24)},
+        layout_preset = $6,
+        about_me = $7,
+        who_id_like_to_meet = $8,
+        general_interests = $9,
+        music = $10,
+        movies = $11,
+        games = $12,
+        theme_background_color = $13,
+        theme_text_color = $14,
+        theme_box_color = $15,
+        theme_border_color = $16,
+        theme_header_color = $17,
+        theme_font_family = $18,
+        theme_background_repeat = $19,
+        theme_background_size = $20,
+        theme_background_position = $21,
+        profile_song_title = $22,
+        profile_song_artist = $23,
+        profile_song_url = $24,
+        ${sectionUpdate}
         updated_at = NOW()
       WHERE user_id = $1
       RETURNING
@@ -300,7 +308,8 @@ export async function updateOwnProfile(userId, profileInput) {
         headline,
         mood,
         status_message,
-        ${layoutReturn}
+        layout_preset,
+        ${sectionReturn}
         about_me,
         who_id_like_to_meet,
         general_interests,
@@ -320,7 +329,33 @@ export async function updateOwnProfile(userId, profileInput) {
         theme_background_size,
         theme_background_position
     `,
-    values
+    [
+      userId,
+      profileInput.displayName,
+      profileInput.headline,
+      profileInput.mood,
+      profileInput.statusMessage,
+      profileInput.layoutPreset || 'classic',
+      profileInput.aboutMe,
+      profileInput.whoIdLikeToMeet,
+      profileInput.generalInterests,
+      profileInput.music,
+      profileInput.movies,
+      profileInput.games,
+      profileInput.themeBackgroundColor,
+      profileInput.themeTextColor,
+      profileInput.themeBoxColor,
+      profileInput.themeBorderColor,
+      profileInput.themeHeaderColor,
+      profileInput.themeFontFamily,
+      profileInput.themeBackgroundRepeat,
+      profileInput.themeBackgroundSize,
+      profileInput.themeBackgroundPosition,
+      profileInput.profileSongTitle,
+      profileInput.profileSongArtist,
+      profileInput.profileSongUrl,
+      ...(hasSectionOrder ? [JSON.stringify(normalizeSectionOrder(profileInput.sectionOrder))] : [])
+    ]
   );
 
   if (result.rowCount === 0) {
@@ -331,7 +366,8 @@ export async function updateOwnProfile(userId, profileInput) {
 }
 
 export async function getProfileByUsername(username) {
-  const hasLayoutPreset = await hasLayoutPresetColumn();
+  const hasLayoutPreset = await hasProfileColumn('layout_preset');
+  const hasSectionOrder = await hasProfileColumn('section_order');
   const profileResult = await query(
     `
       SELECT
@@ -344,6 +380,7 @@ export async function getProfileByUsername(username) {
         profiles.mood,
         profiles.status_message,
         ${layoutPresetSelect(hasLayoutPreset)},
+        ${sectionOrderSelect(hasSectionOrder)},
         profiles.about_me,
         profiles.who_id_like_to_meet,
         profiles.general_interests,

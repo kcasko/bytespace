@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { mockProfiles } from '../data/mockProfiles.js';
 import {
   allowedProfileFonts,
+  allowedSectionKeys,
+  defaultSectionOrder,
+  normalizeSectionOrder,
   getOwnProfileByUserId,
   getProfileByUsername,
   updateOwnProfile,
@@ -102,6 +105,33 @@ function validateProfileSongUrl(value) {
   return null;
 }
 
+
+function validateSectionOrder(value) {
+  if (value === undefined || value === null) {
+    return { sectionOrder: defaultSectionOrder };
+  }
+
+  if (!Array.isArray(value)) {
+    return { error: 'sectionOrder must be an array.' };
+  }
+
+  const seen = new Set();
+
+  for (const item of value) {
+    if (!allowedSectionKeys.has(item)) {
+      return { error: `sectionOrder contains unsupported section: ${item}.` };
+    }
+
+    if (seen.has(item)) {
+      return { error: `sectionOrder contains duplicate section: ${item}.` };
+    }
+
+    seen.add(item);
+  }
+
+  return { sectionOrder: normalizeSectionOrder(value) };
+}
+
 function validateProfileInput(body) {
   const input = {};
 
@@ -114,6 +144,14 @@ function validateProfileInput(body) {
 
     input[field] = value;
   }
+
+  const sectionOrderValidation = validateSectionOrder(body.sectionOrder);
+
+  if (sectionOrderValidation.error) {
+    return { error: sectionOrderValidation.error };
+  }
+
+  input.sectionOrder = sectionOrderValidation.sectionOrder;
 
   const profileSongUrlError = validateProfileSongUrl(input.profileSongUrl);
 

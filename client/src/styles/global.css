@@ -2409,6 +2409,61 @@ button {
 }
 
 
+
+/* v3.5 profile section ordering */
+.section-order-list {
+  display: grid;
+  gap: 7px;
+}
+
+.section-order-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px;
+  border: 3px outset #00c5ff;
+  background: #fff;
+  color: #00126f;
+  font-weight: 900;
+}
+
+.section-order-item div {
+  display: flex;
+  gap: 5px;
+}
+
+.section-order-item button {
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 2px outset #ff9de5;
+  background: #fff73b;
+  color: #00126f;
+  font-weight: 900;
+}
+
+.section-order-item button:disabled {
+  opacity: 0.45;
+}
+
+.section-stack-preview {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.section-stack-preview span {
+  padding: 5px 7px;
+  border: 2px solid currentColor;
+  background: rgba(255, 255, 255, 0.55);
+  font-weight: 900;
+}
+
+.ordered-section {
+  display: grid;
+  gap: 10px;
+}
+
 /* v3.4 public landing polish */
 .landing-hero--polished {
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -2703,6 +2758,7 @@ button {
   }
 
   .comment-form__footer button,
+  .section-order-item button,
   .bulletin-form button,
   .bulletin-card__actions button,
   .notifications-header button,
@@ -2723,6 +2779,7 @@ button {
   }
 
   .dashboard-welcome,
+  .section-order-item,
   .dashboard-mini-card,
   .sample-profile-card__body,
   .profile-preview-identity {

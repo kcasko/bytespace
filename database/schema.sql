@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   mood VARCHAR(120),
   status_message TEXT,
   layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic',
+  section_order JSONB,
   about_me TEXT,
   who_id_like_to_meet TEXT,
   general_interests TEXT,

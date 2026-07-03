@@ -718,6 +718,26 @@ Validation:
 Security reminders: keep `/opt/bytespace/server/.env` private, do not add music file uploads, do not host copyrighted audio, and do not store secrets in profile music fields.
 
 
+## v3.5 Profile Section Ordering Notes
+
+ByteSpace v3.5 adds safe, preset section ordering for public profiles. It adds `profiles.section_order JSONB` for existing deployments with `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` when the database user has permission. If a deployment has not been migrated yet, runtime code falls back to the default order.
+
+Allowed section keys are `about`, `interests`, `music`, `friends`, `bulletins`, and `comments`. Missing keys are appended in default order. Unknown keys and duplicate keys are rejected by the profile update route. Public profiles render existing section components in the saved order; users cannot submit raw HTML, raw CSS, JavaScript, arbitrary component names, or custom labels.
+
+The editor uses Up/Down controls and Reset to Default. Existing layout presets, theme customization, profile music, status messages, mobile breakpoints, reports, comments, bulletins, and notifications remain compatible.
+
+Deployment verification remains:
+
+```bash
+cd /opt/bytespace
+npm run build
+sudo systemctl restart bytespace
+curl -i https://bytespace.casko.dev/api/health
+curl -i https://bytespace.casko.dev/api/db/health
+```
+
+Safety reminders: do not print, copy, edit, or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`. Do not commit AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
+
 ## v3.4 Public Landing Page Polish Notes
 
 ByteSpace v3.4 is a frontend public-homepage polish pass. It does not change registration mode, auth behavior, admin permissions, reports, audit logs, notifications, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, or production environment files.

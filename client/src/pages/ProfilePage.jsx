@@ -12,6 +12,28 @@ const fallbackProfileImage =
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
+
+const defaultSectionOrder = ['about', 'interests', 'music', 'friends', 'bulletins', 'comments'];
+
+function normalizeSectionOrder(value) {
+  const source = Array.isArray(value) ? value : [];
+  const seen = new Set();
+  const normalized = [];
+
+  for (const item of source) {
+    if (defaultSectionOrder.includes(item) && !seen.has(item)) {
+      normalized.push(item);
+      seen.add(item);
+    }
+  }
+
+  for (const item of defaultSectionOrder) {
+    if (!seen.has(item)) normalized.push(item);
+  }
+
+  return normalized;
+}
+
 const layoutClassNames = new Set(['classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight']);
 
 function getLayoutClassName(layoutPreset) {
@@ -124,20 +146,64 @@ function Sidebar({ profile, currentUser }) {
         </Box>
       )}
 
-      <Box title="Interests">
-        <dl className="interests-list">
-          <dt>General</dt>
-          <dd>{profile.interests.general}</dd>
-          <dt>Music</dt>
-          <dd>{profile.interests.music}</dd>
-          <dt>Movies</dt>
-          <dd>{profile.interests.movies}</dd>
-          <dt>Games</dt>
-          <dd>{profile.interests.games}</dd>
-        </dl>
-      </Box>
     </aside>
   );
+}
+
+
+function Interests({ interests = {} }) {
+  return (
+    <Box title="Interests">
+      <dl className="interests-list">
+        <dt>General</dt>
+        <dd>{interests.general || 'No general interests listed yet.'}</dd>
+        <dt>Music</dt>
+        <dd>{interests.music || 'No music interests listed yet.'}</dd>
+        <dt>Movies</dt>
+        <dd>{interests.movies || 'No movie interests listed yet.'}</dd>
+        <dt>Games</dt>
+        <dd>{interests.games || 'No game interests listed yet.'}</dd>
+      </dl>
+    </Box>
+  );
+}
+
+function OrderedProfileSections({ profile, comments, currentUser, bulletins, bulletinError, onCommentPosted }) {
+  const sections = {
+    about: (
+      <div className="ordered-section" key="about" data-section="about">
+        <Box title="About Me" className="about-box">
+          <p>{profile.aboutMe || 'This profile has not written an About Me yet. Mysterious.'}</p>
+        </Box>
+        <Box title="Who I'd Like To Meet">
+          <p>{profile.whoIdLikeToMeet || 'No meeting wishlist yet. The social radar is quiet.'}</p>
+        </Box>
+      </div>
+    ),
+    interests: <Interests key="interests" interests={profile.interests} />,
+    music: <ProfileSong key="music" profile={profile} />,
+    friends: <TopFriends key="friends" friends={profile.topFriends} />,
+    comments: (
+      <Comments
+        key="comments"
+        comments={comments}
+        currentUser={currentUser}
+        profileUsername={profile.username}
+        onCommentPosted={onCommentPosted}
+      />
+    ),
+    bulletins: bulletinError ? (
+      <Box key="bulletins" title="Bulletin Board">
+        <div className="friend-empty-note">
+          {bulletinError === 'These bulletins are private'
+            ? 'These bulletins are private.'
+            : bulletinError}
+        </div>
+      </Box>
+    ) : <Bulletins key="bulletins" bulletins={bulletins} currentUser={currentUser} />
+  };
+
+  return normalizeSectionOrder(profile.sectionOrder).map((sectionKey) => sections[sectionKey]);
 }
 
 function TopFriends({ friends }) {
@@ -534,33 +600,14 @@ export default function ProfilePage({ currentUser }) {
             )}
           </div>
 
-          <Box title="About Me" className="about-box">
-            <p>{profile.aboutMe}</p>
-          </Box>
-
-          <Box title="Who I'd Like To Meet">
-            <p>{profile.whoIdLikeToMeet}</p>
-          </Box>
-
-          <ProfileSong profile={profile} />
-          <TopFriends friends={profile.topFriends} />
-          <Comments
+          <OrderedProfileSections
+            profile={profile}
             comments={comments}
             currentUser={currentUser}
-            profileUsername={profile.username}
+            bulletins={bulletins}
+            bulletinError={bulletinError}
             onCommentPosted={(comment) => setComments((current) => [comment, ...current])}
           />
-          {bulletinError ? (
-            <Box title="Bulletin Board">
-              <div className="friend-empty-note">
-                {bulletinError === 'These bulletins are private'
-                  ? 'These bulletins are private.'
-                  : bulletinError}
-              </div>
-            </Box>
-          ) : (
-            <Bulletins bulletins={bulletins} currentUser={currentUser} />
-          )}
         </section>
       </div>
     </main>

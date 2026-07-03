@@ -21,7 +21,8 @@ export async function ensureOperationalSchema() {
     await query(`
       ALTER TABLE profiles
         ADD COLUMN IF NOT EXISTS status_message TEXT,
-        ADD COLUMN IF NOT EXISTS layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic'
+        ADD COLUMN IF NOT EXISTS layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic',
+        ADD COLUMN IF NOT EXISTS section_order JSONB
     `);
 
     await query(`
@@ -29,6 +30,12 @@ export async function ensureOperationalSchema() {
       SET layout_preset = 'classic'
       WHERE layout_preset IS NULL
          OR layout_preset NOT IN ('classic', 'compact', 'wide', 'sidebar_left', 'sidebar_right', 'spotlight')
+    `);
+
+    await query(`
+      UPDATE profiles
+      SET section_order = '["about","interests","music","friends","bulletins","comments"]'::jsonb
+      WHERE section_order IS NULL
     `);
 
     await query(`
@@ -50,7 +57,7 @@ export async function ensureOperationalSchema() {
       throw error;
     }
 
-    console.warn('Skipping profiles status/layout migration because the app database user is not the table owner.');
+    console.warn('Skipping profiles status/layout/section-order migration because the app database user is not the table owner.');
   }
 
 
