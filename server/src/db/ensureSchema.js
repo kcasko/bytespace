@@ -24,7 +24,20 @@ export async function ensureOperationalSchema() {
       ALTER TABLE profiles
         ADD COLUMN IF NOT EXISTS status_message TEXT,
         ADD COLUMN IF NOT EXISTS layout_preset VARCHAR(40) NOT NULL DEFAULT 'classic',
-        ADD COLUMN IF NOT EXISTS section_order JSONB
+        ADD COLUMN IF NOT EXISTS section_order JSONB,
+        ADD COLUMN IF NOT EXISTS show_in_directory BOOLEAN NOT NULL DEFAULT TRUE,
+        ADD COLUMN IF NOT EXISTS show_music_in_directory BOOLEAN NOT NULL DEFAULT TRUE,
+        ADD COLUMN IF NOT EXISTS show_status_in_directory BOOLEAN NOT NULL DEFAULT TRUE
+    `);
+
+    await query(`
+      UPDATE profiles
+      SET show_in_directory = COALESCE(show_in_directory, TRUE),
+          show_music_in_directory = COALESCE(show_music_in_directory, TRUE),
+          show_status_in_directory = COALESCE(show_status_in_directory, TRUE)
+      WHERE show_in_directory IS NULL
+         OR show_music_in_directory IS NULL
+         OR show_status_in_directory IS NULL
     `);
 
     await query(`

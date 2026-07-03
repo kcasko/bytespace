@@ -1,6 +1,22 @@
 import { query as dbQuery } from './pool.js';
 
 export const discoverySorts = new Set(['newest', 'updated', 'username']);
+let browsePreferenceColumnsAvailable = null;
+
+async function hasBrowsePreferenceColumns() {
+  if (browsePreferenceColumnsAvailable !== null) return browsePreferenceColumnsAvailable;
+
+  const result = await dbQuery(`
+    SELECT COUNT(*)::int AS column_count
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'profiles'
+      AND column_name IN ('show_in_directory', 'show_music_in_directory', 'show_status_in_directory')
+  `);
+
+  browsePreferenceColumnsAvailable = result.rows[0]?.column_count === 3;
+  return browsePreferenceColumnsAvailable;
+}
 
 function mapUserCard(row, currentUserId) {
   const isPrivate = row.profile_visibility === 'private';
@@ -10,10 +26,10 @@ function mapUserCard(row, currentUserId) {
     displayName: row.display_name || row.username,
     headline: isPrivate ? '' : row.headline || '',
     mood: isPrivate ? '' : row.mood || '',
-    statusMessage: isPrivate ? '' : row.status_message || '',
+    statusMessage: isPrivate || row.show_status_in_directory === false ? '' : row.status_message || '',
     profileImageUrl: row.profile_image_url || '',
     layoutPreset: row.layout_preset || 'classic',
-    hasProfileMusic: Boolean(!isPrivate && (row.profile_song_title || row.profile_song_artist || row.profile_song_url)),
+    hasProfileMusic: Boolean(!isPrivate && row.show_music_in_directory !== false && (row.profile_song_title || row.profile_song_artist || row.profile_song_url)),
     friendCount: Number(row.friend_count || 0),
     createdAt: row.created_at,
     updatedAt: row.profile_updated_at || row.created_at
@@ -54,6 +70,20 @@ export async function searchUsers({ query = '', currentUserId = null, sort = 'ne
   const hasQuery = normalizedQuery.length > 0;
   const searchPattern = `%${normalizedQuery}%`;
   const orderBy = getOrderBy(normalizedSort);
+  const hasPreferences = await hasBrowsePreferenceColumns();
+  const preferenceSelect = hasPreferences
+    ? 'profiles.show_in_directory, profiles.show_music_in_directory, profiles.show_status_in_directory,'
+    : 'TRUE AS show_in_directory, TRUE AS show_music_in_directory, TRUE AS show_status_in_directory,';
+  const directoryWhere = hasPreferences ? 'AND profiles.show_in_directory IS NOT FALSE' : '';
+  const statusSearchClause = hasPreferences
+    ? "OR (profiles.show_status_in_directory IS NOT FALSE AND LOWER(COALESCE(profiles.status_message, '')) LIKE $2)"
+    : "OR LOWER(COALESCE(profiles.status_message, '')) LIKE $2";
+  const musicFilterClause = hasPreferences
+    ? 'AND profiles.show_music_in_directory IS NOT FALSE'
+    : '';
+  const statusFilterClause = hasPreferences
+    ? 'AND profiles.show_status_in_directory IS NOT FALSE'
+    : '';
 
   const result = await dbQuery(
     `
@@ -71,6 +101,7 @@ export async function searchUsers({ query = '', currentUserId = null, sort = 'ne
         profiles.profile_song_title,
         profiles.profile_song_artist,
         profiles.profile_song_url,
+        ${preferenceSelect}
         profiles.updated_at AS profile_updated_at,
         friendships.status AS friendship_status,
         friendships.requester_id AS friendship_requester_id,
@@ -89,21 +120,32 @@ export async function searchUsers({ query = '', currentUserId = null, sort = 'ne
           OR (friendships.receiver_id = $3::int AND friendships.requester_id = users.id)
         )
       WHERE users.suspended_at IS NULL
+        ${directoryWhere}
         AND (
           $1::boolean = false
           OR LOWER(users.username) LIKE $2
           OR LOWER(COALESCE(profiles.display_name, '')) LIKE $2
-          OR LOWER(COALESCE(profiles.status_message, '')) LIKE $2
+          ${statusSearchClause}
         )
         AND (
           $5::boolean = false
-          OR NULLIF(profiles.profile_song_title, '') IS NOT NULL
-          OR NULLIF(profiles.profile_song_artist, '') IS NOT NULL
-          OR NULLIF(profiles.profile_song_url, '') IS NOT NULL
+          OR (
+            TRUE
+            ${musicFilterClause}
+            AND (
+              NULLIF(profiles.profile_song_title, '') IS NOT NULL
+              OR NULLIF(profiles.profile_song_artist, '') IS NOT NULL
+              OR NULLIF(profiles.profile_song_url, '') IS NOT NULL
+            )
+          )
         )
         AND (
           $6::boolean = false
-          OR NULLIF(profiles.status_message, '') IS NOT NULL
+          OR (
+            TRUE
+            ${statusFilterClause}
+            AND NULLIF(profiles.status_message, '') IS NOT NULL
+          )
         )
         AND (
           $3::int IS NULL

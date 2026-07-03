@@ -1685,6 +1685,34 @@ Safe YouTube previews are supported only for known YouTube watch/share/short/emb
 
 
 
+
+### v3.9 Account Settings
+
+ByteSpace v3.9 expands `/settings` into a safe account settings area while preserving existing privacy and block controls.
+
+Account APIs:
+
+* `GET /api/account/settings` returns safe account basics and browse-directory preferences for the logged-in user.
+* `PUT /api/account/preferences` updates browse-directory preference booleans.
+* `PUT /api/account/password` changes the logged-in user's password after verifying the current password.
+
+Schema additions on `profiles`:
+
+* `show_in_directory BOOLEAN NOT NULL DEFAULT TRUE`
+* `show_music_in_directory BOOLEAN NOT NULL DEFAULT TRUE`
+* `show_status_in_directory BOOLEAN NOT NULL DEFAULT TRUE`
+
+Browse preference behavior:
+
+* `show_in_directory=false` excludes the account from `/browse` discovery results only.
+* `show_music_in_directory=false` hides the profile music indicator on browse cards only.
+* `show_status_in_directory=false` hides the status message on browse cards and status-message search only.
+* Known public profile URLs continue to obey the existing profile visibility settings; this is not a private-profile toggle.
+
+Password changes require the current password, require a new password of at least 8 characters, use the existing bcrypt hashing pattern, keep the current session active, and never return or log password hashes.
+
+Safety notes: settings routes require login, users can only update their own account, preference values are strict booleans, invite-only registration is unchanged, and no password hashes, invite codes, session data, admin-only data, `.env`, or `/etc/bytespace/backup.env` are exposed.
+
 ### v3.8 Profile Discovery Polish
 
 ByteSpace v3.8 improves `/browse` into a safer retro profile directory. Users can search by username, display name, or status message, and the search state is reflected in query parameters such as `/browse?q=keith`.

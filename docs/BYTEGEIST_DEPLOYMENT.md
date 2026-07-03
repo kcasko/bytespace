@@ -721,6 +721,34 @@ Security reminders: keep `/opt/bytespace/server/.env` private, do not add music 
 
 
 
+
+## v3.9 Account Settings Notes
+
+ByteSpace v3.9 adds account settings under the existing `/settings` page. It keeps existing privacy/block settings and adds safe account basics, browse-directory preferences, and password change controls.
+
+New logged-in account API routes:
+
+* `GET /api/account/settings`
+* `PUT /api/account/preferences`
+* `PUT /api/account/password`
+
+Schema additions:
+
+* `profiles.show_in_directory BOOLEAN NOT NULL DEFAULT TRUE`
+* `profiles.show_music_in_directory BOOLEAN NOT NULL DEFAULT TRUE`
+* `profiles.show_status_in_directory BOOLEAN NOT NULL DEFAULT TRUE`
+
+Browse behavior:
+
+* `show_in_directory=false` removes a user from `/browse` results.
+* `show_music_in_directory=false` hides only the browse-card music indicator.
+* `show_status_in_directory=false` hides only the browse-card status message and status-message discovery search.
+* Public profile URL visibility remains controlled by existing privacy settings.
+
+Password changes require the current password and a new password of at least 8 characters. Passwords and password hashes are never logged or returned. The current session remains active after a successful password change.
+
+This release does not change invite-only registration, admin permissions, reports, audit logs, notifications, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, AWS configuration, or production environment files. Do not print or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`.
+
 ## v3.8 Profile Discovery Polish Notes
 
 ByteSpace v3.8 improves `/browse` and the existing public/session-aware user search route. It does not change invite-only registration, admin permissions, reports, audit logs, notifications, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, AWS configuration, or production environment files.

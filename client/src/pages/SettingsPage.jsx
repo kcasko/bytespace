@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { changePassword, getAccountSettings, updateAccountPreferences } from '../api/accountApi.js';
 import { blockUser, getBlockedUsers, unblockUser } from '../api/blockApi.js';
 import { getMySettings, updateMySettings } from '../api/settingsApi.js';
+
+const emptyAccount = {
+  user: null,
+  profile: { displayName: '' },
+  preferences: {
+    showInDirectory: true,
+    showMusicInDirectory: true,
+    showStatusInDirectory: true
+  },
+  preferencesUnavailable: false
+};
 
 const emptySettings = {
   profileVisibility: 'public',
@@ -28,7 +40,9 @@ function SelectSetting({ title, name, value, options, helper, onChange }) {
 }
 
 export default function SettingsPage({ currentUser }) {
+  const [account, setAccount] = useState(emptyAccount);
   const [settings, setSettings] = useState(emptySettings);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [blockUsername, setBlockUsername] = useState('');
   const [status, setStatus] = useState(currentUser ? 'loading' : 'logged-out');
@@ -48,14 +62,16 @@ export default function SettingsPage({ currentUser }) {
       setError('');
 
       try {
-        const [data, blockedData] = await Promise.all([
+        const [data, blockedData, accountData] = await Promise.all([
           getMySettings(),
-          getBlockedUsers()
+          getBlockedUsers(),
+          getAccountSettings()
         ]);
 
         if (!ignore) {
           setSettings({ ...emptySettings, ...data });
           setBlockedUsers(blockedData);
+          setAccount({ ...emptyAccount, ...accountData, preferences: { ...emptyAccount.preferences, ...(accountData?.preferences || {}) } });
           setStatus('ready');
         }
       } catch (err) {
@@ -77,6 +93,61 @@ export default function SettingsPage({ currentUser }) {
     }));
     setMessage('');
     setError('');
+  }
+
+  function updatePreference(event) {
+    const { name, checked } = event.target;
+    setAccount((current) => ({
+      ...current,
+      preferences: {
+        ...current.preferences,
+        [name]: checked
+      }
+    }));
+    setMessage('');
+    setError('');
+  }
+
+  function updatePasswordField(event) {
+    setPasswordForm((current) => ({
+      ...current,
+      [event.target.name]: event.target.value
+    }));
+    setMessage('');
+    setError('');
+  }
+
+  async function savePreferences(event) {
+    event.preventDefault();
+    setMessage('');
+    setError('');
+
+    try {
+      const savedAccount = await updateAccountPreferences(account.preferences);
+      setAccount({ ...emptyAccount, ...savedAccount, preferences: { ...emptyAccount.preferences, ...(savedAccount?.preferences || {}) } });
+      setMessage('Account preferences saved. Your directory listing knows its boundaries.');
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function submitPasswordChange(event) {
+    event.preventDefault();
+    setMessage('');
+    setError('');
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError('New password confirmation does not match.');
+      return;
+    }
+
+    try {
+      await changePassword({ currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setMessage('Password updated. The gate has a new squeaky hinge.');
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   async function saveSettings(event) {
@@ -153,6 +224,91 @@ export default function SettingsPage({ currentUser }) {
         {message && <div className="editor-success">{message}</div>}
         {error && <div className="auth-error">{error}</div>}
         {status === 'loading' && <div className="retro-state">Loading privacy switches...</div>}
+
+        <section className="settings-section account-basics-section">
+          <h2>Account Basics</h2>
+          <div className="account-basics-grid">
+            <div><strong>@{account.user?.username || currentUser.username}</strong><span>Username</span></div>
+            <div><strong>{account.profile?.displayName || currentUser.username}</strong><span>Display name</span></div>
+            <div><strong>{account.user?.createdAt ? new Date(account.user.createdAt).toLocaleDateString() : 'unknown'}</strong><span>Joined</span></div>
+            <div><strong>{account.user?.onboardingCompletedAt ? 'Complete' : 'Not complete'}</strong><span>Onboarding</span></div>
+            {currentUser.isAdmin && <div><strong>Admin</strong><span>Badge</span></div>}
+            {account.user?.suspendedAt && <div><strong>Suspended</strong><span>Status</span></div>}
+          </div>
+        </section>
+
+        <section className="settings-section account-preferences-section">
+          <h2>Browse Directory Preferences</h2>
+          <p>These control what appears in Browse only. Your public profile URL still works according to your privacy settings.</p>
+          {account.preferencesUnavailable && <div className="auth-error">Browse preferences are waiting on a database migration.</div>}
+          <form className="account-preferences-form" onSubmit={savePreferences}>
+            <label>
+              <input
+                name="showInDirectory"
+                type="checkbox"
+                checked={account.preferences.showInDirectory}
+                onChange={updatePreference}
+              />
+              Show my profile in Browse
+            </label>
+            <label>
+              <input
+                name="showMusicInDirectory"
+                type="checkbox"
+                checked={account.preferences.showMusicInDirectory}
+                onChange={updatePreference}
+              />
+              Show profile music indicator in Browse
+            </label>
+            <label>
+              <input
+                name="showStatusInDirectory"
+                type="checkbox"
+                checked={account.preferences.showStatusInDirectory}
+                onChange={updatePreference}
+              />
+              Show status message in Browse
+            </label>
+            <button type="submit" disabled={account.preferencesUnavailable}>Save Browse Preferences</button>
+          </form>
+        </section>
+
+        <section className="settings-section password-settings-section">
+          <h2>Password</h2>
+          <form className="password-settings-form" onSubmit={submitPasswordChange}>
+            <label>
+              Current password
+              <input
+                name="currentPassword"
+                type="password"
+                value={passwordForm.currentPassword}
+                onChange={updatePasswordField}
+                autoComplete="current-password"
+              />
+            </label>
+            <label>
+              New password
+              <input
+                name="newPassword"
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={updatePasswordField}
+                autoComplete="new-password"
+              />
+            </label>
+            <label>
+              Confirm new password
+              <input
+                name="confirmPassword"
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={updatePasswordField}
+                autoComplete="new-password"
+              />
+            </label>
+            <button type="submit">Change Password</button>
+          </form>
+        </section>
 
         <form className="settings-form" onSubmit={saveSettings}>
           <SelectSetting
