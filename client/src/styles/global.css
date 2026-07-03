@@ -2408,6 +2408,116 @@ button {
   font-weight: 900;
 }
 
+
+/* v3.4 public landing polish */
+.landing-hero--polished {
+  grid-template-columns: minmax(0, 1fr) 360px;
+  min-height: 360px;
+}
+
+.landing-copy {
+  display: grid;
+  align-content: center;
+}
+
+.landing-hero--polished h1 {
+  max-width: 760px;
+  font-size: 58px;
+  line-height: 0.98;
+}
+
+.landing-note {
+  max-width: 620px;
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  border: 3px dashed #003d9c;
+  background: #fffdea;
+  color: #00126f;
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+}
+
+.sample-profile-card--vapor {
+  background:
+    linear-gradient(135deg, rgba(255, 102, 204, 0.22), rgba(0, 229, 255, 0.18)),
+    #fff;
+}
+
+.sample-profile-card--vapor .sample-profile-card__photo {
+  background: linear-gradient(135deg, #27104f, #ff66cc 52%, #00e5ff);
+}
+
+.sample-profile-card__top-eight {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  padding: 8px;
+  border-top: 2px dotted #003d9c;
+  background: #fffdea;
+  color: #00126f;
+  font-weight: 900;
+}
+
+.sample-profile-card__top-eight span {
+  grid-column: 1 / -1;
+  color: #6e006e;
+}
+
+.sample-profile-card__top-eight i {
+  display: grid;
+  min-height: 34px;
+  place-items: center;
+  border: 2px solid #ff00a8;
+  background: #fff73b;
+  font-style: normal;
+  font-size: 12px;
+}
+
+.landing-feature-box--intro {
+  margin-top: 12px;
+}
+
+.landing-feature-grid--expanded {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.landing-feature h3 {
+  margin: 0 0 6px;
+  color: #6e006e;
+  font-size: 15px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.landing-feature p {
+  margin: 0;
+  color: #00126f;
+  line-height: 1.35;
+}
+
+.landing-invite-box {
+  margin: 10px;
+  padding: 12px;
+  border: 4px double #ff00a8;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 247, 59, 0.35) 0 10px, rgba(255, 157, 229, 0.28) 10px 20px),
+    #fff;
+  color: #00126f;
+}
+
+.landing-invite-box h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  color: #00126f;
+  text-shadow: 2px 2px 0 #fff73b;
+}
+
+.landing-invite-box p {
+  max-width: 760px;
+  margin: 0 0 10px;
+  font-weight: 900;
+}
+
 /* v3.1 mobile polish */
 @media (max-width: 768px) {
   :root {
@@ -2512,6 +2622,7 @@ button {
   .bulletins-layout,
   .editor-layout,
   .landing-feature-grid,
+  .landing-feature-grid--expanded,
   .friends-grid,
   .profile-preview-friends,
   .dashboard-stat-grid {
@@ -2712,8 +2823,18 @@ button {
     max-width: 100%;
   }
 
-  .landing-hero h1 {
-    font-size: 46px;
+  .landing-hero h1,
+  .landing-hero--polished h1 {
+    font-size: 40px;
+  }
+
+  .landing-hero--polished {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .sample-profile-card__top-eight {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .landing-tagline {
@@ -2778,8 +2899,9 @@ button {
     text-shadow: 1px 1px 0 #fff, 2px 2px 0 #ff00a8;
   }
 
-  .landing-hero h1 {
-    font-size: 36px;
+  .landing-hero h1,
+  .landing-hero--polished h1 {
+    font-size: 32px;
   }
 
   .profile-stats-grid,

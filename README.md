@@ -1682,6 +1682,14 @@ URL validation remains server-side. Empty URLs are allowed. Non-empty URLs must 
 Safe YouTube previews are supported only for known YouTube watch/share/short/embed URL shapes. ByteSpace converts the video id into a fixed `https://www.youtube-nocookie.com/embed/VIDEO_ID` iframe with no autoplay. Users cannot paste raw iframe/embed HTML, scripts, or custom embed code. The server never fetches user-provided music URLs and no external API keys are used.
 
 
+### v3.4 Public Landing Page Polish
+
+ByteSpace v3.4 improves the logged-out homepage while preserving the logged-in dashboard at `/`. The public landing page now explains ByteSpace as an invite-only retro social profile space with custom profiles, themes, layouts, profile music, friends, Top 8, bulletins, comments, notifications, and safety tools.
+
+The landing page includes clear Log In, Register with Invite, and Browse Profiles links plus explicit invite-only messaging. It uses a static mock profile preview (`byteghost`) and does not fetch private user data, expose invite codes, expose admin-only data, or add tracking/analytics.
+
+The page remains mobile-friendly: hero content stacks, feature cards collapse, buttons are tap-friendly, and the mock profile panel does not overflow. Do not print or commit `/opt/bytespace/server/.env`, `/etc/bytespace/backup.env`, AWS credentials, invite codes, database URLs, backup dumps, or upload archives.
+
 ### v3.3 Theme Customization Polish
 
 ByteSpace v3.3 improves `/profile/edit` theme controls while keeping customization preset-based and safe. The editor groups controls into Theme preset, Colors, Font, Background image behavior, and Preview sections. Preset cards now show descriptions, swatches, and selected state.

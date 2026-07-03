@@ -718,6 +718,24 @@ Validation:
 Security reminders: keep `/opt/bytespace/server/.env` private, do not add music file uploads, do not host copyrighted audio, and do not store secrets in profile music fields.
 
 
+## v3.4 Public Landing Page Polish Notes
+
+ByteSpace v3.4 is a frontend public-homepage polish pass. It does not change registration mode, auth behavior, admin permissions, reports, audit logs, notifications, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, or production environment files.
+
+The logged-out `/` page now presents ByteSpace as an invite-only retro social app with short feature cards and a static mock profile preview. The preview is fake sample content and does not fetch private user data or admin-only data. Existing logged-in users still see the dashboard at `/`.
+
+Safety reminders: registration remains invite-only, invite codes are not exposed, no tracking scripts or third-party analytics were added, and no raw user HTML/CSS/JS is rendered. Do not print, copy, edit, or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`.
+
+Deployment verification remains:
+
+```bash
+cd /opt/bytespace
+npm run build
+sudo systemctl restart bytespace
+curl -i https://bytespace.casko.dev/api/health
+curl -i https://bytespace.casko.dev/api/db/health
+```
+
 ## v3.3 Theme Customization Polish Notes
 
 ByteSpace v3.3 is a safe theme editor polish pass. It changes editor UI, server validation, and public theme sanitization. It does not change Nginx Proxy Manager, UFW, PostgreSQL credentials, backups, invite-only registration, admin permissions, reports, audit logs, notifications, or production environment files.
