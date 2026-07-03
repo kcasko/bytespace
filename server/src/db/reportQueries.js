@@ -51,9 +51,13 @@ const reportSelect = `
     bulletin_authors.username AS bulletin_author_username,
     bulletin_author_profiles.display_name AS bulletin_author_display_name,
     LEFT(CONCAT(bulletins.title, ': ', COALESCE(bulletins.body, '')), 240) AS bulletin_preview,
+    dm_senders.username AS dm_sender_username,
+    dm_sender_profiles.display_name AS dm_sender_display_name,
+    LEFT(dm_messages.body, 240) AS dm_preview,
     CASE
       WHEN content_reports.target_type = 'comment' THEN LEFT(profile_comments.body, 240)
       WHEN content_reports.target_type = 'bulletin' THEN LEFT(CONCAT(bulletins.title, ': ', COALESCE(bulletins.body, '')), 240)
+      WHEN content_reports.target_type = 'dm_message' THEN LEFT(dm_messages.body, 240)
       ELSE content_reports.target_username
     END AS target_preview
   FROM content_reports
@@ -71,6 +75,10 @@ const reportSelect = `
     AND bulletins.id = content_reports.target_id
   LEFT JOIN users bulletin_authors ON bulletin_authors.id = bulletins.user_id
   LEFT JOIN profiles bulletin_author_profiles ON bulletin_author_profiles.user_id = bulletin_authors.id
+  LEFT JOIN dm_messages ON content_reports.target_type = 'dm_message'
+    AND dm_messages.id = content_reports.target_id
+  LEFT JOIN users dm_senders ON dm_senders.id = dm_messages.sender_id
+  LEFT JOIN profiles dm_sender_profiles ON dm_sender_profiles.user_id = dm_senders.id
 `;
 
 export async function createReport(reporterId, input) {

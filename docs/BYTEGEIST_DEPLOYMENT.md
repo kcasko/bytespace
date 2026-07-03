@@ -722,6 +722,43 @@ Security reminders: keep `/opt/bytespace/server/.env` private, do not add music 
 
 
 
+
+## v4.0 Direct Messages Notes
+
+ByteSpace v4.0 adds friends-only 1-to-1 direct messages. The feature is intentionally an MVP: no group chats, no attachments/images, no voice/video, no typing indicators, no read receipts, and no websockets/realtime layer.
+
+New schema:
+
+* `dm_conversations`
+* `dm_messages`
+
+New API routes:
+
+* `GET /api/dms/conversations`
+* `POST /api/dms/conversations`
+* `GET /api/dms/conversations/:id/messages`
+* `POST /api/dms/conversations/:id/messages`
+* `DELETE /api/dms/messages/:id`
+
+Security behavior:
+
+* All routes require login.
+* Conversation/message access requires participation.
+* Sending requires an accepted friendship and no block in either direction.
+* Suspended users are blocked by existing auth middleware.
+* Message bodies are plain text, trimmed, required, and limited to 1000 characters.
+* Users can soft-delete only their own messages.
+* Existing conversations may remain visible after blocking or unfriending, but sending is rejected.
+
+Reports and notifications:
+
+* Report target type `dm_message` is supported.
+* Only DM participants can report a DM message.
+* Admin reports show only the reported DM message preview, not unrelated private conversation history.
+* New messages create `direct_message` notifications with a generic body.
+
+This release does not change invite-only registration, admin permissions, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, AWS configuration, or production environment files. Do not print or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`.
+
 ## v3.9 Account Settings Notes
 
 ByteSpace v3.9 adds account settings under the existing `/settings` page. It keeps existing privacy/block settings and adds safe account basics, browse-directory preferences, and password change controls.

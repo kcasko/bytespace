@@ -1686,6 +1686,49 @@ Safe YouTube previews are supported only for known YouTube watch/share/short/emb
 
 
 
+
+### v4.0 Friends-Only Direct Messages
+
+ByteSpace v4.0 adds a controlled first version of private 1-to-1 direct messages. DMs are friends-only, text-only, and use normal request/response loading rather than websockets.
+
+Schema additions:
+
+* `dm_conversations` stores one conversation per normalized user pair.
+* `dm_messages` stores text messages, soft deletion metadata, and a report count field for future moderation work.
+
+DM API routes:
+
+* `GET /api/dms/conversations`
+* `POST /api/dms/conversations`
+* `GET /api/dms/conversations/:id/messages`
+* `POST /api/dms/conversations/:id/messages`
+* `DELETE /api/dms/messages/:id`
+
+Rules:
+
+* All DM routes require login.
+* Users can only access conversations they participate in.
+* Users can only start or continue conversations with accepted friends.
+* If either user blocks the other, new conversations and new messages are rejected.
+* Existing conversations remain visible after blocking or unfriending, but sending is blocked.
+* Users can soft-delete only their own messages.
+* Message bodies are trimmed, required, limited to 1000 characters, and rendered as plain React text.
+* No group chat, attachments, images, voice/video, typing indicators, or realtime/websocket behavior are included.
+
+Frontend:
+
+* `/messages` shows a conversation list, start-conversation form, selected thread, compose box, delete-own-message action, and DM report buttons.
+* Logged-in navigation includes Messages.
+* Public profiles include a Message action for logged-in users viewing someone else; the API still enforces friendship and block rules.
+
+Reporting and notifications:
+
+* DM messages can be reported with target type `dm_message`; only participants can report a DM message.
+* Admin reports show a minimal reported-message preview only, not a full private inbox.
+* New messages create a `direct_message` notification without including the full message body.
+
+Safety notes: DMs do not expose emails, password hashes, invite codes, session data, admin-only data, `.env`, or `/etc/bytespace/backup.env`. Admins do not get a broad DM inbox in this milestone.
+
 ### v3.9 Account Settings
 
 ByteSpace v3.9 expands `/settings` into a safe account settings area while preserving existing privacy and block controls.

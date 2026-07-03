@@ -96,15 +96,17 @@ function ProfileStats({ stats = {} }) {
   );
 }
 
-function ContactBox({ displayName }) {
-  const actions = ['Add Friend', 'Send Message', 'Add Favorite'];
-
+function ContactBox({ displayName, username, currentUser }) {
   return (
     <Box title={`Contact ${displayName}`}>
       <div className="contact-grid">
-        {actions.map((action) => (
-          <button key={action} type="button">{action}</button>
-        ))}
+        <button type="button">Add Friend</button>
+        {currentUser && currentUser.username !== username ? (
+          <Link to={`/messages?user=${encodeURIComponent(username)}`}>Message</Link>
+        ) : (
+          <button type="button" disabled>Message</button>
+        )}
+        <button type="button">Add Favorite</button>
       </div>
     </Box>
   );
@@ -131,7 +133,7 @@ function Sidebar({ profile, currentUser }) {
         {profile.online && <div className="online-badge">Online Now!</div>}
       </Box>
 
-      <ContactBox displayName={profile.displayName} />
+      <ContactBox displayName={profile.displayName} username={profile.username} currentUser={currentUser} />
 
       <ProfileStats stats={profile.stats} />
 

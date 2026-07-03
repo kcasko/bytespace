@@ -76,6 +76,55 @@ export async function ensureOperationalSchema() {
   }
 
 
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS dm_conversations (
+      id SERIAL PRIMARY KEY,
+      user_one_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_two_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT dm_conversations_no_self CHECK (user_one_id <> user_two_id),
+      CONSTRAINT dm_conversations_order_check CHECK (user_one_id < user_two_id),
+      CONSTRAINT dm_conversations_unique_pair UNIQUE (user_one_id, user_two_id)
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS dm_messages (
+      id SERIAL PRIMARY KEY,
+      conversation_id INTEGER NOT NULL REFERENCES dm_conversations(id) ON DELETE CASCADE,
+      sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      body TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      deleted_at TIMESTAMPTZ,
+      deleted_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      report_count INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+
+  await query('CREATE INDEX IF NOT EXISTS dm_conversations_user_one_idx ON dm_conversations(user_one_id, updated_at DESC)');
+  await query('CREATE INDEX IF NOT EXISTS dm_conversations_user_two_idx ON dm_conversations(user_two_id, updated_at DESC)');
+  await query('CREATE INDEX IF NOT EXISTS dm_messages_conversation_created_idx ON dm_messages(conversation_id, created_at DESC)');
+  await query('CREATE INDEX IF NOT EXISTS dm_messages_sender_idx ON dm_messages(sender_id)');
+
+  try {
+    await query(`
+      ALTER TABLE content_reports
+      DROP CONSTRAINT IF EXISTS content_reports_target_type_check,
+      DROP CONSTRAINT IF EXISTS content_reports_target_required_check,
+      ADD CONSTRAINT content_reports_target_type_check
+        CHECK (target_type IN ('profile', 'comment', 'bulletin', 'dm_message')),
+      ADD CONSTRAINT content_reports_target_required_check CHECK (
+        (target_type = 'profile' AND target_username IS NOT NULL)
+        OR (target_type IN ('comment', 'bulletin', 'dm_message') AND target_id IS NOT NULL)
+      )
+    `);
+  } catch (error) {
+    if (error.code !== '42501') throw error;
+    console.warn('Skipping content_reports target-type migration because the app database user is not the table owner.');
+  }
+
   await query(`
     CREATE TABLE IF NOT EXISTS notifications (
       id SERIAL PRIMARY KEY,
@@ -129,11 +178,11 @@ export async function ensureOperationalSchema() {
       resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       resolved_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      CONSTRAINT content_reports_target_type_check CHECK (target_type IN ('profile', 'comment', 'bulletin')),
+      CONSTRAINT content_reports_target_type_check CHECK (target_type IN ('profile', 'comment', 'bulletin', 'dm_message')),
       CONSTRAINT content_reports_status_check CHECK (status IN ('open', 'reviewed', 'dismissed', 'action_taken')),
       CONSTRAINT content_reports_target_required_check CHECK (
         (target_type = 'profile' AND target_username IS NOT NULL)
-        OR (target_type IN ('comment', 'bulletin') AND target_id IS NOT NULL)
+        OR (target_type IN ('comment', 'bulletin', 'dm_message') AND target_id IS NOT NULL)
       )
     )
   `);

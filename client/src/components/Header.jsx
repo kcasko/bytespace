@@ -52,6 +52,7 @@ export default function Header({ currentUser, onLogout }) {
           {currentUser ? (
             <>
               <Link to="/friends">Friends</Link>
+              <Link to="/messages">Messages</Link>
               <Link to="/bulletins">Bulletins</Link>
               <Link className="notification-nav-link" to="/notifications">
                 Notifications

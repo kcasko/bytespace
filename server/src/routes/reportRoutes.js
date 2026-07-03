@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import { canReportDmMessage } from '../db/dmQueries.js';
 import { createReport, reportReasons } from '../db/reportQueries.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { sessionMiddleware } from '../middleware/sessionMiddleware.js';
 
 const router = Router();
-const targetTypes = new Set(['profile', 'comment', 'bulletin']);
+const targetTypes = new Set(['profile', 'comment', 'bulletin', 'dm_message']);
 const MAX_DETAILS_LENGTH = 1000;
 
 function validateReportInput(body) {
@@ -49,6 +50,13 @@ router.post('/', sessionMiddleware, requireAuth, async (req, res) => {
   }
 
   try {
+    if (validation.input.targetType === 'dm_message') {
+      const allowed = await canReportDmMessage(req.session.user.id, validation.input.targetId);
+      if (!allowed) {
+        return res.status(403).json({ error: 'You can only report DM messages from your own conversations.' });
+      }
+    }
+
     const result = await createReport(req.session.user.id, validation.input);
 
     if (result.duplicate) {
