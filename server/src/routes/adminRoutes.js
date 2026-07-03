@@ -6,6 +6,7 @@ import {
   getRecentBulletins,
   getRecentComments,
   getRecentSignups,
+  getAdminSummary,
   getUserDetail,
   listUsers,
   suspendUserByUsername,
@@ -28,6 +29,17 @@ function parseLimit(value, fallback = 25, max = 100) {
   return Math.min(parsed, max);
 }
 
+
+
+router.get('/summary', async (_req, res) => {
+  try {
+    const summary = await getAdminSummary();
+    return res.json({ summary });
+  } catch (error) {
+    console.error('Failed to load admin summary:', { code: error.code, message: error.message });
+    return res.status(500).json({ error: 'Admin summary unavailable.' });
+  }
+});
 
 router.get('/audit-logs', async (req, res) => {
   try {

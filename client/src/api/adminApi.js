@@ -19,6 +19,10 @@ async function adminFetch(path, options = {}) {
   return data;
 }
 
+export function getAdminSummary() {
+  return adminFetch('/api/admin/summary');
+}
+
 export function getAdminUsers(query = '') {
   const params = query ? `?q=${encodeURIComponent(query)}` : '';
   return adminFetch(`/api/admin/users${params}`);
@@ -78,10 +82,11 @@ export function updateReportStatus(id, { status, adminNote = '' }) {
 }
 
 
-export function getAuditLogs({ action = '', targetType = '', limit = 50 } = {}) {
+export function getAuditLogs({ action = '', targetType = '', adminUsername = '', limit = 50 } = {}) {
   const params = new URLSearchParams();
   if (action) params.set('action', action);
   if (targetType) params.set('targetType', targetType);
+  if (adminUsername) params.set('adminUsername', adminUsername);
   if (limit) params.set('limit', String(limit));
   const query = params.toString();
   return adminFetch(`/api/admin/audit-logs${query ? `?${query}` : ''}`);

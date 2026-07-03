@@ -719,6 +719,21 @@ Security reminders: keep `/opt/bytespace/server/.env` private, do not add music 
 
 
 
+
+## v3.7 Admin Moderation Polish Notes
+
+ByteSpace v3.7 improves `/admin` usability while preserving existing server-side admin authorization. The admin dashboard now has scannable cards for Overview, Reports, Users, Audit Logs, Recent Signups, Recent Comments, and Recent Bulletins.
+
+New admin-only endpoint:
+
+* `GET /api/admin/summary`
+
+The summary endpoint returns safe aggregate counts only: total users, suspended users, open reports, and recent signups/comments/bulletins. It does not expose password hashes, invite codes, session data, environment values, or backup configuration.
+
+The report workflow now highlights status, target type, reporter, reason, created date, previews, and admin notes. User moderation displays admin/suspended badges and keeps self-suspension blocked server-side. Audit log rows are easier to scan and can be filtered by action, target type, and actor username.
+
+This release does not change invite-only registration, admin permissions, reports schema, audit schema, notifications, backups, Nginx Proxy Manager, UFW, PostgreSQL credentials, AWS configuration, or production environment files. Do not print or commit `/opt/bytespace/server/.env` or `/etc/bytespace/backup.env`.
+
 ## v3.6 Onboarding Welcome Flow Notes
 
 ByteSpace v3.6 adds a simple logged-in onboarding flow at `/welcome` plus onboarding API routes under `/api/onboarding`. The flow is invite-friendly and explains profile setup, themes, layouts, section ordering, profile music, browsing, friends, bulletins, notifications, reporting, blocking, and privacy settings.

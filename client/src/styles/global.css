@@ -3108,3 +3108,159 @@ button {
     width: 100%;
   }
 }
+
+
+/* v3.7 admin dashboard polish */
+.admin-dashboard {
+  max-width: 1180px;
+}
+
+.admin-hero-panel,
+.admin-section-header,
+.admin-card-title-row,
+.admin-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-hero-panel {
+  border-color: #660066;
+  background: #fff0fb;
+}
+
+.admin-hero-panel h1,
+.admin-section-header h2 {
+  margin-bottom: 0.25rem;
+}
+
+.admin-section-card {
+  border-radius: 0;
+}
+
+.admin-section-header {
+  margin-bottom: 1rem;
+}
+
+.admin-section-header p {
+  margin: 0;
+  color: #454545;
+}
+
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-summary-card {
+  padding: 0.8rem;
+  border: 3px double #336699;
+  background: #d6e6f2;
+  min-height: 92px;
+}
+
+.admin-summary-card strong {
+  display: block;
+  font-size: 1.8rem;
+  line-height: 1;
+  color: #660066;
+}
+
+.admin-summary-card span,
+.admin-summary-card small {
+  display: block;
+}
+
+.admin-filter-row {
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.admin-card-list {
+  gap: 0.85rem;
+}
+
+.admin-card-item {
+  align-items: flex-start;
+  border-left-width: 8px;
+}
+
+.admin-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-card-main p,
+.admin-card-main small {
+  overflow-wrap: anywhere;
+}
+
+.admin-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.35rem 0.75rem;
+  margin: 0.65rem 0;
+  font-size: 0.92rem;
+}
+
+.admin-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  min-width: 240px;
+}
+
+.admin-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-empty-state {
+  padding: 0.85rem;
+  border: 2px dashed #999;
+  background: #fffde7;
+}
+
+.status-pill {
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .admin-hero-panel,
+  .admin-section-header,
+  .admin-card-title-row,
+  .admin-item,
+  .admin-two-column {
+    display: block;
+  }
+
+  .admin-summary-grid,
+  .admin-meta-grid,
+  .admin-actions-grid,
+  .admin-two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-actions,
+  .admin-actions-grid {
+    margin-top: 0.75rem;
+    width: 100%;
+  }
+
+  .admin-actions button,
+  .admin-actions-grid button,
+  .admin-filter-row button,
+  .admin-hero-panel button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .admin-badge-row {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 0.45rem;
+  }
+}

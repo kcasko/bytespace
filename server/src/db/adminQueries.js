@@ -87,6 +87,31 @@ export async function getUserAdminStatus(userId) {
   };
 }
 
+
+export async function getAdminSummary() {
+  const result = await query(
+    `
+      SELECT
+        (SELECT COUNT(*)::integer FROM users) AS total_users,
+        (SELECT COUNT(*)::integer FROM users WHERE suspended_at IS NOT NULL) AS suspended_users,
+        (SELECT COUNT(*)::integer FROM content_reports WHERE status = 'open') AS open_reports,
+        (SELECT COUNT(*)::integer FROM users WHERE created_at >= NOW() - INTERVAL '7 days') AS recent_signups,
+        (SELECT COUNT(*)::integer FROM profile_comments WHERE created_at >= NOW() - INTERVAL '7 days') AS recent_comments,
+        (SELECT COUNT(*)::integer FROM bulletins WHERE created_at >= NOW() - INTERVAL '7 days') AS recent_bulletins
+    `
+  );
+
+  const row = result.rows[0] || {};
+  return {
+    totalUsers: row.total_users || 0,
+    suspendedUsers: row.suspended_users || 0,
+    openReports: row.open_reports || 0,
+    recentSignups: row.recent_signups || 0,
+    recentComments: row.recent_comments || 0,
+    recentBulletins: row.recent_bulletins || 0
+  };
+}
+
 export async function listUsers({ search = '', limit = 100 } = {}) {
   const normalizedSearch = String(search || '').trim();
   const result = await query(

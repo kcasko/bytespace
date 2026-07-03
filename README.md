@@ -1683,6 +1683,26 @@ Safe YouTube previews are supported only for known YouTube watch/share/short/emb
 
 
 
+
+### v3.7 Admin Moderation Polish
+
+ByteSpace v3.7 polishes the admin dashboard at `/admin` without changing public auth behavior or exposing admin data. The page now uses clearer moderation sections for Overview, Reports, Users, Audit Logs, Recent Signups, Recent Comments, and Recent Bulletins.
+
+Admin API addition:
+
+* `GET /api/admin/summary` returns admin-only aggregate counts for total users, suspended users, open reports, and recent signups/comments/bulletins.
+
+Moderation polish:
+
+* Overview summary cards make the admin page easier to scan.
+* Report rows show status badges, reporter/target metadata, reason, preview, note, and clear actions for reviewed, dismissed, or action taken.
+* User rows show admin and suspended badges, joined date, profile link, and clearer suspend/unsuspend actions.
+* Audit logs show action/target badges, actor username, target info, metadata preview, and action/target/actor filters.
+* Self-suspension remains blocked server-side and is also guarded in the UI.
+* Mobile admin sections stack into cards with tap-friendly buttons.
+
+Safety notes: all admin routes still require a logged-in admin, no password hashes or secrets are returned, audit metadata remains sanitized, and `.env` plus `/etc/bytespace/backup.env` must remain private.
+
 ### v3.6 Onboarding Welcome Flow
 
 ByteSpace v3.6 adds a guided first-run welcome flow for newly invited users. New users can visit `/welcome` after registration or login to get a short tour of profiles, themes, layouts, section ordering, profile music, browsing, friends, bulletins, notifications, and safety tools.
